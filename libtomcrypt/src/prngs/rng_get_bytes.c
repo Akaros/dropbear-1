@@ -9,6 +9,7 @@
  * Tom St Denis, tomstdenis@gmail.com, http://libtomcrypt.com
  */
 #include "tomcrypt.h"
+#include "options.h"
 
 /** 
    @file rng_get_bytes.c
@@ -26,7 +27,7 @@ static unsigned long rng_nix(unsigned char *buf, unsigned long len,
     FILE *f;
     unsigned long x;
 #ifdef TRY_URANDOM_FIRST
-    f = fopen("/dev/urandom", "rb");
+    f = fopen(DROPBEAR_URANDOM_DEV, "rb");
     if (f == NULL)
 #endif /* TRY_URANDOM_FIRST */
        f = fopen("/dev/random", "rb");

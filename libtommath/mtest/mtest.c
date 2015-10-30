@@ -38,6 +38,7 @@ mulmod
 #include <stdlib.h>
 #include <time.h>
 #include "mpi.c"
+#include "options.h"
 
 FILE *rng;
 
@@ -98,7 +99,7 @@ int main(void)
    }
 */
 
-   rng = fopen("/dev/urandom", "rb");
+   rng = fopen(DROPBEAR_URANDOM_DEV, "rb");
    if (rng == NULL) {
       rng = fopen("/dev/random", "rb");
       if (rng == NULL) {
