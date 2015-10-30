@@ -255,7 +255,11 @@ Homedir is prepended unless path begins with / */
 /* Source for randomness. This must be able to provide hundreds of bytes per SSH
  * connection without blocking. In addition /dev/random is used for seeding
  * rsa/dss key generation */
+#ifdef __akaros__
+#define DROPBEAR_URANDOM_DEV "#cons/urandom"
+#else
 #define DROPBEAR_URANDOM_DEV "/dev/urandom"
+#endif
 
 /* Set this to use PRNGD or EGD instead of /dev/urandom or /dev/random */
 /*#define DROPBEAR_PRNGD_SOCKET "/var/run/dropbear-rng"*/
