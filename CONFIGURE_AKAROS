@@ -1,24 +1,49 @@
 #!/bin/bash
-export AKAROS=/home/rminnich//projects/akaros
-export CC=/home/rminnich/install/x86_64-ros-gcc/bin/x86_64-ucb-akaros-gcc
-autoconf
-autoheader
-./configure \
-  --prefix=$AKAROS/usr/local \
-  --exec-prefix=$AKAROS/bin \
-  --datadir=$AKAROS \
-  --host=x86_64-ucb-akaros \
-  --disable-zlib \
-  --disable-openpty \
-  --disable-syslog   \
-  --disable-shadow    \
-  --enable-bundled-libtom \
-  --disable-lastlog \
-  --disable-utmp     \
-  --disable-utmpx     \
-  --disable-wtmp       \
-  --disable-wtmpx    \
-  --disable-loginfunc \
-  --disable-pututline  \
-  --disable-pututxline  \
 
+: ${AKAROS_ROOT:=${HOME}/projects/akaros/}
+: ${AKAROS_XCC_ROOT:=${HOME}/install/x86_64-ucb-akaros-gcc}
+
+KFS=${AKAROS_ROOT}/kern/kfs/
+XCC=${AKAROS_XCC_ROOT}/bin/x86_64-ucb-akaros-gcc
+
+function bootstrap()
+{
+	autoreconf --install
+}
+
+function configure()
+{
+	rm -rf build; mkdir build; cd build
+	CC=${XCC} ../configure \
+	  --prefix=${KFS} \
+	  --host=$(basename ${XCC%-gcc}) \
+	  --disable-zlib \
+	  --disable-openpty \
+	  --disable-syslog   \
+	  --disable-shadow    \
+	  --enable-bundled-libtom \
+	  --disable-lastlog \
+	  --disable-utmp     \
+	  --disable-utmpx     \
+	  --disable-wtmp       \
+	  --disable-wtmpx    \
+	  --disable-loginfunc \
+	  --disable-pututline  \
+	  --disable-pututxline
+	cd -
+}
+
+bootstrap
+configure
+
+cat << EndOfMessage
+
+Dropbear has now been configured for Akaros!
+Please cd into the 'build' directory and run the following 
+commands to install it into the KFS of your Akaros tree.
+
+$ cd build
+$ make
+$ make install
+
+EndOfMessage
