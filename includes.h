@@ -156,7 +156,7 @@ typedef unsigned int u_int32_t;
 typedef u_int32_t uint32_t;
 #endif /* HAVE_UINT32_T */
 
-#ifdef SO_PRIORITY
+#if defined(SO_PRIORITY) && defined(__linux__)
 #include <linux/types.h>
 #include <linux/pkt_sched.h>
 #endif

@@ -239,7 +239,7 @@ void handle_connect_fds(fd_set *writefd) {
 void connect_set_writequeue(struct dropbear_progress_connection *c, struct Queue *writequeue) {
 	c->writequeue = writequeue;
 }
-
+#if defined(HAVE_WRITEV) && (defined(IOV_MAX) || defined(UIO_MAXIOV))
 void packet_queue_to_iovec(struct Queue *queue, struct iovec *iov, unsigned int *iov_count) {
 	struct Link *l;
 	unsigned int i;
@@ -281,7 +281,7 @@ void packet_queue_consume(struct Queue *queue, ssize_t written) {
 		}
 	}
 }
-
+#endif
 void set_sock_nodelay(int sock) {
 	int val;
 
@@ -333,7 +333,7 @@ void set_sock_priority(int sock, enum dropbear_prio prio) {
 	}
 #endif
 
-#ifdef SO_PRIORITY
+#if defined(SO_PRIORITY) && defined(__linux__)
 	if (prio == DROPBEAR_PRIO_LOWDELAY) {
 		so_prio_val = TC_PRIO_INTERACTIVE;
 	} else if (prio == DROPBEAR_PRIO_BULK) {

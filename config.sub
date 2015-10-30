@@ -140,6 +140,10 @@ esac
 ### recognize some manufacturers as not being operating systems, so we
 ### can provide default operating systems below.
 case $os in
+	-akaros*)
+		os=-akaros
+		basic_machine=x86_64
+		;;
 	-sun*os*)
 		# Prevent following clause from handling this invalid input.
 		;;
@@ -1329,6 +1333,9 @@ case $os in
 	# First match some system type aliases
 	# that might get confused with valid system types.
 	# -solaris* is a basic system type, with this one exception.
+	-akaros*)
+		os=-akaros
+		;;
 	-auroraux)
 		os=-auroraux
 		;;
@@ -1714,6 +1721,9 @@ vendor=unknown
 case $basic_machine in
 	*-unknown)
 		case $os in
+			-akaros*)
+				vendor=ucb
+				;;
 			-riscix*)
 				vendor=acorn
 				;;

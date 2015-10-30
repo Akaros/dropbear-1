@@ -46,7 +46,7 @@
 /* Setting this disables the fast exptmod bignum code. It saves ~5kB, but is
  * perhaps 20% slower for pubkey operations (it is probably worth experimenting
  * if you want to use this) */
-/*#define NO_FAST_EXPTMOD*/
+#define NO_FAST_EXPTMOD
 
 /* Set this if you want to use the DROPBEAR_SMALL_CODE option. This can save
 several kB in binary size however will make the symmetrical ciphers and hashes
@@ -189,7 +189,7 @@ If you test it please contact the Dropbear author */
 
 /* Whether to print the message of the day (MOTD). This doesn't add much code
  * size */
-#define DO_MOTD
+//#define DO_MOTD
 
 /* The MOTD file path */
 #ifndef MOTD_FILENAME

@@ -1,0 +1,24 @@
+#!/bin/bash
+export AKAROS=/home/rminnich//projects/akaros
+export CC=/home/rminnich/install/x86_64-ros-gcc/bin/x86_64-ucb-akaros-gcc
+autoconf
+autoheader
+./configure \
+  --prefix=$AKAROS/usr/local \
+  --exec-prefix=$AKAROS/bin \
+  --datadir=$AKAROS \
+  --host=x86_64-ucb-akaros \
+  --disable-zlib \
+  --disable-openpty \
+  --disable-syslog   \
+  --disable-shadow    \
+  --enable-bundled-libtom \
+  --disable-lastlog \
+  --disable-utmp     \
+  --disable-utmpx     \
+  --disable-wtmp       \
+  --disable-wtmpx    \
+  --disable-loginfunc \
+  --disable-pututline  \
+  --disable-pututxline  \
+
