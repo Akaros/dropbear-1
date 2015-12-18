@@ -168,6 +168,10 @@ void main_noinetd() {
 		fclose(pidfile);
 	}
 
+	if (listensockcount > 1) {
+		fprintf(stderr, "hold on there cowboy! one socket only!\n");
+		listensockcount = 1;
+	}
 	/* incoming connection select loop */
 	for(;;) {
 
@@ -186,12 +190,14 @@ void main_noinetd() {
 			}
 		}
 
-		val = select(maxsock+1, &fds, NULL, NULL, NULL);
+		//val = select(maxsock+1, &fds, NULL, NULL, NULL);
 
 		if (exitflag) {
 			unlink(svr_opts.pidfile);
 			dropbear_exit("Terminated by signal");
 		}
+
+		val = 1;
 		
 		if (val == 0) {
 			/* timeout reached - shouldn't happen. eh */
@@ -225,6 +231,7 @@ void main_noinetd() {
 			struct sockaddr_storage remoteaddr;
 			socklen_t remoteaddrlen;
 
+			if (0)
 			if (!FD_ISSET(listensocks[i], &fds)) 
 				continue;
 
