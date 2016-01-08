@@ -57,6 +57,7 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 		return -1;
 	case 0:
 		while((nfr = read(process[1], buf, sizeof buf)) > 0){
+if (echo) write(1, buf, nfr);
 			int i, j;
 			j = 0;
 			for(i = 0; i < nfr; i++){
@@ -92,16 +93,16 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 			for(i = 0; i < nto; i++){
 				if(buf[i] == '\r' || buf[i] == '\n'){
 					obuf[j++] = '\n';
-					write(process[0], obuf, j);
+					write(process[1], obuf, j);
 					if(echo){
 						obuf[j-1] = '\r';
 						obuf[j++] = '\n';
-						write(process[1], obuf+oldj, j-oldj);
+						write(1/*process[1]*/, obuf+oldj, j-oldj);
 					}
 					j = 0;
 				} else if(buf[i] == '\003'){ // ctrl-c
 					if(j > 0){
-						if(echo)write(process[1], obuf+oldj, j-oldj);
+						if(echo)write(1/*process[1]*/, obuf+oldj, j-oldj);
 						write(process[1], obuf, j);
 						j = 0;
 					}

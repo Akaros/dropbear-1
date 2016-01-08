@@ -32,7 +32,7 @@ COMMONOBJS=dbutil.o buffer.o \
 		ltc_prng.o ecc.o ecdsa.o crypto_desc.o \
 		gensignkey.o gendss.o genrsa.o
 
-SVROBJS=svr-kex.o svr-auth.o sshpty.o \
+SVROBJS=svr-kex.o svr-auth.o tty.o \
 		svr-authpasswd.o svr-authpubkey.o svr-authpubkeyoptions.o svr-session.o svr-service.o \
 		svr-chansession.o svr-runopts.o svr-agentfwd.o svr-main.o svr-x11fwd.o\
 		svr-tcpfwd.o svr-authpam.o
