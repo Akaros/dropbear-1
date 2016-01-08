@@ -591,15 +591,17 @@ static int sessionpty(struct ChanSess * chansess) {
 	pw = getpwnam(ses.authstate.pw_name);
 	if (!pw)
 		dropbear_exit("getpwnam failed after succeeding previously");
-	pty_setowner(pw, chansess->tty);
-
-	/* Set up the rows/col counts */
-	sessionwinchange(chansess);
-
-	/* Read the terminal modes */
-	get_termmodes(chansess);
-
-	TRACE(("leave sessionpty"))
+	if (0) {
+		pty_setowner(pw, chansess->tty);
+	}
+		
+		/* Set up the rows/col counts */
+		sessionwinchange(chansess);
+		
+		/* Read the terminal modes */
+		get_termmodes(chansess);
+		
+		TRACE(("leave sessionpty"))
 	return DROPBEAR_SUCCESS;
 }
 

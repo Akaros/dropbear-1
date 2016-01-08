@@ -92,7 +92,8 @@ static void main_inetd() {
 	/* Don't check the return value - it may just fail since inetd has
 	 * already done setsid() after forking (xinetd on Darwin appears to do
 	 * this */
-	setsid();
+	if (0)
+		setsid();
 
 	/* Start service program 
 	 * -1 is a dummy childpipe, just something we can close() without 
@@ -190,15 +191,13 @@ void main_noinetd() {
 			}
 		}
 
-		//val = select(maxsock+1, &fds, NULL, NULL, NULL);
+		val = select(maxsock+1, &fds, NULL, NULL, NULL);
 
 		if (exitflag) {
 			unlink(svr_opts.pidfile);
 			dropbear_exit("Terminated by signal");
 		}
 
-		val = 1;
-		
 		if (val == 0) {
 			/* timeout reached - shouldn't happen. eh */
 			continue;
@@ -307,8 +306,9 @@ void main_noinetd() {
 				m_free(remote_port);
 
 #ifndef DEBUG_NOFORK
+				if (0)
 				if (setsid() < 0) {
-					dropbear_exit("setsid: %s", strerror(errno));
+					/*dropbear_exit*/ printf("setsid: %s", strerror(errno));
 				}
 #endif
 

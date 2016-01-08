@@ -281,6 +281,7 @@ pty_make_controlling_tty(int *ttyfd, const char *tty_name)
 		close(fd);
 	}
 #endif /* TIOCNOTTY */
+	if (0)
 	if (setsid() < 0) {
 		dropbear_log(LOG_ERR,
 			"setsid: %.100s", strerror(errno));

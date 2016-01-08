@@ -106,6 +106,7 @@ void dropbear_exit(const char* format, ...) {
 
 	va_list param;
 
+	_dropbear_log(LOG_INFO, "%r:", "%r takes no params, stupid!");
 	va_start(param, format);
 	_dropbear_exit(EXIT_FAILURE, format, param);
 	va_end(param);
