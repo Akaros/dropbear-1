@@ -292,26 +292,26 @@ void buf_put_rsa_sign(buffer* buf, dropbear_rsa_key *key, buffer *data_buf) {
 
 	/* rsa_s used as a temp var*/
 	if (mp_exptmod(&rsa_tmp2, key->e, key->n, &rsa_s) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 	if (mp_invmod(&rsa_tmp2, key->n, &rsa_tmp3) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 	if (mp_mulmod(&rsa_tmp1, &rsa_s, key->n, &rsa_tmp2) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 
 	/* rsa_tmp2 is em' */
 	/* s' = (em')^d mod n */
 	if (mp_exptmod(&rsa_tmp2, key->d, key->n, &rsa_tmp1) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 
 	/* rsa_tmp1 is s' */
 	/* rsa_tmp3 is r^(-1) mod n */
 	/* s = (s')r^(-1) mod n */
 	if (mp_mulmod(&rsa_tmp1, &rsa_tmp3, key->n, &rsa_s) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 
 #else
@@ -319,7 +319,7 @@ void buf_put_rsa_sign(buffer* buf, dropbear_rsa_key *key, buffer *data_buf) {
 	/* s = em^d mod n */
 	/* rsa_tmp1 is em */
 	if (mp_exptmod(&rsa_tmp1, key->d, key->n, &rsa_s) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 
 #endif /* RSA_BLINDING */
@@ -341,7 +341,7 @@ void buf_put_rsa_sign(buffer* buf, dropbear_rsa_key *key, buffer *data_buf) {
 	}
 
 	if (mp_to_unsigned_bin(&rsa_s, buf_getwriteptr(buf, ssize)) != MP_OKAY) {
-		dropbear_exit("RSA error");
+		dropbear_exit("%s %d: RSA error", __FILE__, __LINE__);
 	}
 	buf_incrwritepos(buf, ssize);
 	mp_clear(&rsa_s);

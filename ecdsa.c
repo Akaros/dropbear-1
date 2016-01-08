@@ -55,7 +55,7 @@ ecc_key *gen_ecdsa_priv_key(unsigned int bit_size) {
 #endif
 	}
 	if (!dp) {
-		dropbear_exit("Key size %d isn't valid. Try "
+		dropbear_exit("%s %d: Key size %d isn't valid. Try "
 #ifdef DROPBEAR_ECC_256
 			"256 "
 #endif
@@ -65,12 +65,13 @@ ecc_key *gen_ecdsa_priv_key(unsigned int bit_size) {
 #ifdef DROPBEAR_ECC_521
 			"521 "
 #endif
+			      , __FILE__, __LINE__
 			, bit_size);
 	}
 
 	new_key = m_malloc(sizeof(*new_key));
 	if (ecc_make_key_ex(NULL, dropbear_ltc_prng, new_key, dp) != CRYPT_OK) {
-		dropbear_exit("ECC error");
+		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
 	}
 	return new_key;
 }
@@ -242,7 +243,7 @@ out:
 	}
 
 	if (err == DROPBEAR_FAILURE) {
-		dropbear_exit("ECC error");
+		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
 	}
 }
 
@@ -301,7 +302,7 @@ int buf_ecdsa_verify(buffer *buf, ecc_key *key, buffer *data_buf) {
 	if (ltc_init_multi(&r, &s, &v, &w, &u1, &u2, &p, &e, &m, NULL) != CRYPT_OK
 		|| !mG
 		|| !mQ) {
-		dropbear_exit("ECC error");
+		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
 	}
 
 	if (buf_get_ecdsa_verify_params(buf, r, s) != DROPBEAR_SUCCESS) {

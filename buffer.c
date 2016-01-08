@@ -43,7 +43,7 @@ buffer* buf_new(unsigned int size) {
 	buffer* buf;
 	
 	if (size > BUF_MAX_SIZE) {
-		dropbear_exit("buf->size too big");
+		dropbear_exit("%s %d: buf->size too big", __FILE__, __LINE__);
 	}
 
 	buf = (buffer*)m_malloc(sizeof(buffer)+size);
@@ -78,7 +78,7 @@ void buf_burn(buffer* buf) {
 buffer* buf_resize(buffer *buf, unsigned int newsize) {
 
 	if (newsize > BUF_MAX_SIZE) {
-		dropbear_exit("buf->size too big");
+		dropbear_exit("%s %d: buf->size too big", __FILE__, __LINE__);
 	}
 
 	buf = m_realloc(buf, sizeof(buffer)+newsize);
@@ -106,7 +106,7 @@ buffer* buf_newcopy(buffer* buf) {
 /* Set the length of the buffer */
 void buf_setlen(buffer* buf, unsigned int len) {
 	if (len > buf->size) {
-		dropbear_exit("Bad buf_setlen");
+		dropbear_exit("%s %d: Bad buf_setlen", __FILE__, __LINE__);
 	}
 	buf->len = len;
 }
@@ -114,7 +114,7 @@ void buf_setlen(buffer* buf, unsigned int len) {
 /* Increment the length of the buffer */
 void buf_incrlen(buffer* buf, unsigned int incr) {
 	if (incr > BUF_MAX_INCR || buf->len + incr > buf->size) {
-		dropbear_exit("Bad buf_incrlen");
+		dropbear_exit("%s %d: Bad buf_incrlen", __FILE__, __LINE__);
 	}
 	buf->len += incr;
 }
@@ -122,7 +122,7 @@ void buf_incrlen(buffer* buf, unsigned int incr) {
 void buf_setpos(buffer* buf, unsigned int pos) {
 
 	if (pos > buf->len) {
-		dropbear_exit("Bad buf_setpos");
+		dropbear_exit("%s %d: Bad buf_setpos", __FILE__, __LINE__);
 	}
 	buf->pos = pos;
 }
@@ -130,7 +130,7 @@ void buf_setpos(buffer* buf, unsigned int pos) {
 /* increment the position by incr, increasing the buffer length if required */
 void buf_incrwritepos(buffer* buf, unsigned int incr) {
 	if (incr > BUF_MAX_INCR || buf->pos + incr > buf->size) {
-		dropbear_exit("Bad buf_incrwritepos");
+		dropbear_exit("%s %d: Bad buf_incrwritepos", __FILE__, __LINE__);
 	}
 	buf->pos += incr;
 	if (buf->pos > buf->len) {
@@ -144,7 +144,7 @@ void buf_incrpos(buffer* buf,  int incr) {
 	if (incr > BUF_MAX_INCR ||
 			(unsigned int)((int)buf->pos + incr) > buf->len 
 			|| ((int)buf->pos + incr) < 0) {
-		dropbear_exit("Bad buf_incrpos");
+		dropbear_exit("%s %d: Bad buf_incrpos", __FILE__, __LINE__);
 	}
 	buf->pos += incr;
 }
@@ -155,7 +155,7 @@ unsigned char buf_getbyte(buffer* buf) {
 	/* This check is really just ==, but the >= allows us to check for the
 	 * bad case of pos > len, which should _never_ happen. */
 	if (buf->pos >= buf->len) {
-		dropbear_exit("Bad buf_getbyte");
+		dropbear_exit("%s %d: Bad buf_getbyte", __FILE__, __LINE__);
 	}
 	return buf->data[buf->pos++];
 }
@@ -185,7 +185,7 @@ void buf_putbyte(buffer* buf, unsigned char val) {
 unsigned char* buf_getptr(buffer* buf, unsigned int len) {
 
 	if (buf->pos + len > buf->len) {
-		dropbear_exit("Bad buf_getptr");
+		dropbear_exit("%s %d: Bad buf_getptr", __FILE__, __LINE__);
 	}
 	return &buf->data[buf->pos];
 }
@@ -195,7 +195,7 @@ unsigned char* buf_getptr(buffer* buf, unsigned int len) {
 unsigned char* buf_getwriteptr(buffer* buf, unsigned int len) {
 
 	if (buf->pos + len > buf->size) {
-		dropbear_exit("Bad buf_getwriteptr");
+		dropbear_exit("%s %d: Bad buf_getwriteptr", __FILE__, __LINE__);
 	}
 	return &buf->data[buf->pos];
 }
@@ -209,7 +209,7 @@ char* buf_getstring(buffer* buf, unsigned int *retlen) {
 	char* ret;
 	len = buf_getint(buf);
 	if (len > MAX_STRING_LEN) {
-		dropbear_exit("String too long");
+		dropbear_exit("%s %d: String too long", __FILE__, __LINE__);
 	}
 
 	if (retlen != NULL) {
@@ -228,7 +228,7 @@ buffer * buf_getstringbuf(buffer *buf) {
 	buffer *ret = NULL;
 	unsigned int len = buf_getint(buf);
 	if (len > MAX_STRING_LEN) {
-		dropbear_exit("String too long");
+		dropbear_exit("%s %d: String too long", __FILE__, __LINE__);
 	}
 	ret = buf_new(len);
 	memcpy(buf_getwriteptr(ret, len), buf_getptr(buf, len), len);
@@ -292,7 +292,7 @@ void buf_putmpint(buffer* buf, mp_int * mp) {
 	dropbear_assert(mp != NULL);
 
 	if (SIGN(mp) == MP_NEG) {
-		dropbear_exit("negative bignum");
+		dropbear_exit("%s %d: negative bignum", __FILE__, __LINE__);
 	}
 
 	/* zero check */
@@ -318,7 +318,7 @@ void buf_putmpint(buffer* buf, mp_int * mp) {
 			buf_putbyte(buf, 0x00);
 		}
 		if (mp_to_unsigned_bin(mp, buf_getwriteptr(buf, len-pad)) != MP_OKAY) {
-			dropbear_exit("mpint error");
+			dropbear_exit("%s %d: mpint error", __FILE__, __LINE__);
 		}
 		buf_incrwritepos(buf, len-pad);
 	}

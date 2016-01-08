@@ -115,7 +115,7 @@ int signkey_generate(enum signkey_type keytype, int bits, const char* filename)
 			break;
 #endif
 		default:
-			dropbear_exit("Internal error");
+			dropbear_exit("%s %d: Internal error", __FILE__, __LINE__);
 	}
 
 	seedrandom();

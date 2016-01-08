@@ -107,7 +107,7 @@ void process_packet() {
 			else
 			{
 				TRACE(("disallowed packet during kexinit"))
-				dropbear_exit("Unexpected packet type %d, expected %d", type,
+				dropbear_exit("%s %d: Unexpected packet type %d, expected %d", __FILE__, __LINE__, type,
 						ses.requirenext);
 			}
 		}
@@ -133,7 +133,7 @@ void process_packet() {
 	 * NOTE: if the protocol changes and new types are added, revisit this 
 	 * assumption */
 	if ( !ses.authstate.authdone && type > MAX_UNAUTH_PACKET_TYPE ) {
-		dropbear_exit("Received message %d before userauth", type);
+		dropbear_exit("%s %d: Received message %d before userauth", __FILE__, __LINE__, type);
 	}
 
 	for (i = 0; ; i++) {

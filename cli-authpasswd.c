@@ -130,7 +130,7 @@ void cli_auth_password() {
 	{
 		password = gui_getpass(prompt);
 		if (!password) {
-			dropbear_exit("No password");
+			dropbear_exit("%s %d: No password", __FILE__, __LINE__);
 		}
 	} else
 #endif

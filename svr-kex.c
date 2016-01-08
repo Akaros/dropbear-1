@@ -50,14 +50,14 @@ void recv_msg_kexdh_init() {
 
 	TRACE(("enter recv_msg_kexdh_init"))
 	if (!ses.kexstate.recvkexinit) {
-		dropbear_exit("Premature kexdh_init message received");
+		dropbear_exit("%s %d: Premature kexdh_init message received", __FILE__, __LINE__);
 	}
 
 	switch (ses.newkeys->algo_kex->mode) {
 		case DROPBEAR_KEX_NORMAL_DH:
 			m_mp_init(&dh_e);
 			if (buf_getmpint(ses.payload, &dh_e) != DROPBEAR_SUCCESS) {
-				dropbear_exit("Bad kex value");
+				dropbear_exit("%s %d: Bad kex value", __FILE__, __LINE__);
 			}
 			break;
 		case DROPBEAR_KEX_ECDH:
@@ -68,7 +68,7 @@ void recv_msg_kexdh_init() {
 			break;
 	}
 	if (ses.payload->pos != ses.payload->len) {
-		dropbear_exit("Bad kex value");
+		dropbear_exit("%s %d: Bad kex value", __FILE__, __LINE__);
 	}
 
 	send_msg_kexdh_reply(&dh_e, ecdh_qs);
@@ -191,7 +191,7 @@ out:
 
 	if (ret == DROPBEAR_FAILURE)
 	{
-		dropbear_exit("Couldn't read or generate hostkey %s", fn);
+		dropbear_exit("%s %d: Couldn't read or generate hostkey %s", __FILE__, __LINE__, fn);
 	}
 }
 #endif

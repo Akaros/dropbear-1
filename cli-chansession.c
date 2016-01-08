@@ -106,7 +106,7 @@ static void cli_tty_setup() {
 	}
 
 	if (tcgetattr(STDIN_FILENO, &tio) == -1) {
-		dropbear_exit("Failed to set raw TTY mode");
+		dropbear_exit("%s %d: Failed to set raw TTY mode", __FILE__, __LINE__);
 	}
 
 	/* make a copy */
@@ -125,7 +125,7 @@ static void cli_tty_setup() {
 	tio.c_cc[VMIN] = 1;
 	tio.c_cc[VTIME] = 0;
 	if (tcsetattr(STDIN_FILENO, TCSADRAIN, &tio) == -1) {
-		dropbear_exit("Failed to set raw TTY mode");
+		dropbear_exit("%s %d: Failed to set raw TTY mode", __FILE__, __LINE__);
 	}
 
 	cli_ses.tty_raw_mode = 1;
@@ -298,7 +298,7 @@ static void send_chansess_pty_req(struct Channel *channel) {
 
 	/* Set up a window-change handler */
 	if (signal(SIGWINCH, sigwinch_handler) == SIG_ERR) {
-		dropbear_exit("Signal error");
+		dropbear_exit("%s %d: Signal error", __FILE__, __LINE__);
 	}
 	TRACE(("leave send_chansess_pty_req"))
 }
@@ -400,7 +400,7 @@ void cli_send_netcat_request() {
 
 	if (send_msg_channel_open_init(STDIN_FILENO, &cli_chan_netcat) 
 			== DROPBEAR_FAILURE) {
-		dropbear_exit("Couldn't open initial channel");
+		dropbear_exit("%s %d: Couldn't open initial channel", __FILE__, __LINE__);
 	}
 
 	buf_putstring(ses.writepayload, cli_opts.netcat_host,
@@ -422,7 +422,7 @@ void cli_send_chansess_request() {
 
 	if (send_msg_channel_open_init(STDIN_FILENO, &clichansess) 
 			== DROPBEAR_FAILURE) {
-		dropbear_exit("Couldn't open initial channel");
+		dropbear_exit("%s %d: Couldn't open initial channel", __FILE__, __LINE__);
 	}
 
 	/* No special channel request data */
@@ -436,7 +436,7 @@ static int
 do_escape(unsigned char c) {
 	switch (c) {
 		case '.':
-			dropbear_exit("Terminated");
+			dropbear_exit("%s %d: Terminated", __FILE__, __LINE__);
 			return 1;
 			break;
 		case 0x1a:

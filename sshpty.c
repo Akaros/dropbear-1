@@ -61,7 +61,7 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 	}
 	name = ttyname(*ttyfd);
 	if (!name) {
-		dropbear_exit("ttyname fails for openpty device");
+		dropbear_exit("%s %d: ttyname fails for openpty device", __FILE__, __LINE__);
 	}
 
 	strlcpy(namebuf, name, namebuflen);	/* possible truncation */
@@ -167,7 +167,7 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 	}
 	name = ttyname(*ptyfd);
 	if (!name) {
-		dropbear_exit("ttyname fails for /dev/ptc device");
+		dropbear_exit("%s %d: ttyname fails for /dev/ptc device", __FILE__, __LINE__);
 	}
 	strlcpy(namebuf, name, namebuflen);
 	*ttyfd = open(name, O_RDWR | O_NOCTTY);
@@ -377,7 +377,7 @@ pty_setowner(struct passwd *pw, const char *tty_name)
 	 * tty is owned by root.
 	 */
 	if (stat(tty_name, &st)) {
-		dropbear_exit("pty_setowner: stat(%.101s) failed: %.100s",
+		dropbear_exit("%s %d: pty_setowner: stat(%.101s) failed: %.100s", __FILE__, __LINE__,
 				tty_name, strerror(errno));
 	}
 
@@ -390,7 +390,7 @@ pty_setowner(struct passwd *pw, const char *tty_name)
 						tty_name, (unsigned int)pw->pw_uid, (unsigned int)gid,
 						strerror(errno));
 			} else {
-				dropbear_exit("chown(%.100s, %u, %u) failed: %.100s",
+				dropbear_exit("%s %d: chown(%.100s, %u, %u) failed: %.100s", __FILE__, __LINE__,
 				    tty_name, (unsigned int)pw->pw_uid, (unsigned int)gid,
 				    strerror(errno));
 			}
@@ -405,7 +405,7 @@ pty_setowner(struct passwd *pw, const char *tty_name)
 					"chmod(%.100s, 0%o) failed: %.100s",
 					tty_name, mode, strerror(errno));
 			} else {
-				dropbear_exit("chmod(%.100s, 0%o) failed: %.100s",
+				dropbear_exit("%s %d: chmod(%.100s, 0%o) failed: %.100s", __FILE__, __LINE__,
 				    tty_name, mode, strerror(errno));
 			}
 		}

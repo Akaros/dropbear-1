@@ -486,14 +486,14 @@ void get_socket_address(int fd, char **local_host, char **local_port,
 	if (local_host || local_port) {
 		addrlen = sizeof(addr);
 		if (getsockname(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
-			dropbear_exit("Failed socket address: %s", strerror(errno));
+			dropbear_exit("%s %d: Failed socket address: %s", __FILE__, __LINE__, strerror(errno));
 		}
 		getaddrstring(&addr, local_host, local_port, host_lookup);		
 	}
 	if (remote_host || remote_port) {
 		addrlen = sizeof(addr);
 		if (getpeername(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
-			dropbear_exit("Failed socket address: %s", strerror(errno));
+			dropbear_exit("%s %d: Failed socket address: %s", __FILE__, __LINE__, strerror(errno));
 		}
 		getaddrstring(&addr, remote_host, remote_port, host_lookup);		
 	}
@@ -547,7 +547,7 @@ void getaddrstring(struct sockaddr_storage* addr,
 			return;
 		} else {
 			/* if we can't do a numeric lookup, something's gone terribly wrong */
-			dropbear_exit("Failed lookup: %s", gai_strerror(ret));
+			dropbear_exit("%s %d: Failed lookup: %s", __FILE__, __LINE__, gai_strerror(ret));
 		}
 	}
 

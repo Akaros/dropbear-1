@@ -481,7 +481,7 @@ static void get_termmodes(struct ChanSess *chansess) {
 	TRACE(("term mode str %d p->l %d p->p %d", 
 				len, ses.payload->len , ses.payload->pos));
 	if (len != ses.payload->len - ses.payload->pos) {
-		dropbear_exit("Bad term mode string");
+		dropbear_exit("%s %d: Bad term mode string", __FILE__, __LINE__);
 	}
 
 	if (len == 0) {
@@ -576,7 +576,7 @@ static int sessionpty(struct ChanSess * chansess) {
 
 	/* allocate the pty */
 	if (chansess->master != -1) {
-		dropbear_exit("Multiple pty requests");
+		dropbear_exit("%s %d: Multiple pty requests", __FILE__, __LINE__);
 	}
 	if (pty_allocate(&chansess->master, &chansess->slave, namebuf, 64) == 0) {
 		TRACE(("leave sessionpty: failed to allocate pty"))
@@ -585,12 +585,12 @@ static int sessionpty(struct ChanSess * chansess) {
 	
 	chansess->tty = m_strdup(namebuf);
 	if (!chansess->tty) {
-		dropbear_exit("Out of memory"); /* TODO disconnect */
+		dropbear_exit("%s %d: Out of memory", __FILE__, __LINE__); /* TODO disconnect */
 	}
 
 	pw = getpwnam(ses.authstate.pw_name);
 	if (!pw)
-		dropbear_exit("getpwnam failed after succeeding previously");
+		dropbear_exit("%s %d: getpwnam failed after succeeding previously", __FILE__, __LINE__);
 	if (0) {
 		pty_setowner(pw, chansess->tty);
 	}
@@ -792,7 +792,7 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		TRACE(("back to normal sigchld"))
 		/* Revert to normal sigchld handling */
 		if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
-			dropbear_exit("signal() error");
+			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 		}
 		
 		/* redirect stdin/stdout/stderr */
@@ -927,10 +927,10 @@ static void execchild(void *user_data) {
 		if ((setgid(ses.authstate.pw_gid) < 0) ||
 			(initgroups(ses.authstate.pw_name, 
 						ses.authstate.pw_gid) < 0)) {
-			dropbear_exit("Error changing user group");
+			dropbear_exit("%s %d: Error changing user group", __FILE__, __LINE__);
 		}
 		if (setuid(ses.authstate.pw_uid) < 0) {
-			dropbear_exit("Error changing user");
+			dropbear_exit("%s %d: Error changing user", __FILE__, __LINE__);
 		}
 	} else {
 		/* ... but if the daemon is the same uid as the requested uid, we don't
@@ -941,7 +941,7 @@ static void execchild(void *user_data) {
 		 * differing groups won't be set (as with initgroups()). The solution
 		 * is for the sysadmin not to give out the UID twice */
 		if (getuid() != ses.authstate.pw_uid) {
-			dropbear_exit("Couldn't	change user as non-root");
+			dropbear_exit("%s %d: Couldn't	change user as non-root", __FILE__, __LINE__);
 		}
 	}
 
@@ -975,7 +975,7 @@ static void execchild(void *user_data) {
 
 	/* change directory */
 	if (chdir(ses.authstate.pw_dir) < 0) {
-		dropbear_exit("Error changing directory");
+		dropbear_exit("%s %d: Error changing directory", __FILE__, __LINE__);
 	}
 
 #ifndef DISABLE_X11FWD
@@ -991,7 +991,7 @@ static void execchild(void *user_data) {
 	run_shell_command(chansess->cmd, ses.maxfd, usershell);
 
 	/* only reached on error */
-	dropbear_exit("Child failed");
+	dropbear_exit("%s %d: Child failed", __FILE__, __LINE__);
 }
 
 /* Set up the general chansession environment, in particular child-exit
@@ -1010,7 +1010,7 @@ void svr_chansessinitialise() {
 	sa_chld.sa_flags = SA_NOCLDSTOP;
 	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
-		dropbear_exit("signal() error");
+		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 	}
 	
 }
@@ -1031,6 +1031,6 @@ void addnewvar(const char* param, const char* var) {
 	newvar[plen+vlen+1] = '\0';
 	/* newvar is leaked here, but that's part of putenv()'s semantics */
 	if (putenv(newvar) < 0) {
-		dropbear_exit("environ error");
+		dropbear_exit("%s %d: environ error", __FILE__, __LINE__);
 	}
 }

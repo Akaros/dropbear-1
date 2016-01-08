@@ -45,8 +45,8 @@ dropbear_rsa_key * gen_rsa_priv_key(unsigned int size) {
 	DEF_MP_INT(lcm);
 
 	if (size < 512 || size > 4096 || (size % 8 != 0)) {
-		dropbear_exit("Bits must satisfy 512 <= bits <= 4096, and be a"
-			" multiple of 8");
+		dropbear_exit("%s %d: Bits must satisfy 512 <= bits <= 4096, and be a"
+			" multiple of 8", __FILE__, __LINE__);
 	}
 
 	key = m_malloc(sizeof(*key));

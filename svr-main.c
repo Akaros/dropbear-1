@@ -71,7 +71,7 @@ int main(int argc, char ** argv)
 	/* notreached */
 #endif
 
-	dropbear_exit("Compiled without normal mode, can't run without -i\n");
+	dropbear_exit("%s %d: Compiled without normal mode, can't run without -i\n", __FILE__, __LINE__);
 	return -1;
 }
 #endif
@@ -135,7 +135,7 @@ void main_noinetd() {
 	listensockcount = listensockets(listensocks, MAX_LISTEN_ADDR, &maxsock);
 	if (listensockcount == 0)
 	{
-		dropbear_exit("No listening ports available.");
+		dropbear_exit("%s %d: No listening ports available.", __FILE__, __LINE__);
 	}
 
 	for (i = 0; i < listensockcount; i++) {
@@ -151,7 +151,7 @@ void main_noinetd() {
 		}
 #endif
 		if (daemon(0, closefds) < 0) {
-			dropbear_exit("Failed to daemonize: %s", strerror(errno));
+			dropbear_exit("%s %d: Failed to daemonize: %s", __FILE__, __LINE__, strerror(errno));
 		}
 	}
 
@@ -195,7 +195,7 @@ void main_noinetd() {
 
 		if (exitflag) {
 			unlink(svr_opts.pidfile);
-			dropbear_exit("Terminated by signal");
+			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
 		}
 
 		if (val == 0) {
@@ -207,7 +207,7 @@ void main_noinetd() {
 			if (errno == EINTR) {
 				continue;
 			}
-			dropbear_exit("Listening socket error");
+			dropbear_exit("%s %d: Listening socket error", __FILE__, __LINE__);
 		}
 
 		/* close fds which have been authed or closed - svr-auth.c handles
@@ -351,7 +351,7 @@ static void sigchld_handler(int UNUSED(unused)) {
 	sa_chld.sa_flags = SA_NOCLDSTOP;
 	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
-		dropbear_exit("signal() error");
+		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 	}
 	errno = saved_errno;
 }
@@ -385,7 +385,7 @@ static void commonsetup() {
 		signal(SIGTERM, sigintterm_handler) == SIG_ERR ||
 #endif
 		signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
-		dropbear_exit("signal() error");
+		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 	}
 
 	/* catch and reap zombie children */
@@ -393,10 +393,10 @@ static void commonsetup() {
 	sa_chld.sa_flags = SA_NOCLDSTOP;
 	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
-		dropbear_exit("signal() error");
+		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 	}
 	if (signal(SIGSEGV, sigsegv_handler) == SIG_ERR) {
-		dropbear_exit("signal() error");
+		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 	}
 
 	crypto_init();

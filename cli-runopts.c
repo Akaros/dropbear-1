@@ -210,7 +210,7 @@ void cli_getopts(int argc, char ** argv) {
 			/* The previous flag set a value to assign */
 			*next = argv[i];
 			if (*next == NULL) {
-				dropbear_exit("Invalid null argument");
+				dropbear_exit("%s %d: Invalid null argument", __FILE__, __LINE__);
 			}
 			next = NULL;
 			continue;
@@ -421,19 +421,19 @@ void cli_getopts(int argc, char ** argv) {
 
 	if (cli_opts.backgrounded && cli_opts.cmd == NULL
 			&& cli_opts.no_cmd == 0) {
-		dropbear_exit("Command required for -f");
+		dropbear_exit("%s %d: Command required for -f", __FILE__, __LINE__);
 	}
 	
 	if (recv_window_arg) {
 		opts.recv_window = atol(recv_window_arg);
 		if (opts.recv_window == 0 || opts.recv_window > MAX_RECV_WINDOW) {
-			dropbear_exit("Bad recv window '%s'", recv_window_arg);
+			dropbear_exit("%s %d: Bad recv window '%s'", __FILE__, __LINE__, recv_window_arg);
 		}
 	}
 	if (keepalive_arg) {
 		unsigned int val;
 		if (m_str_to_uint(keepalive_arg, &val) == DROPBEAR_FAILURE) {
-			dropbear_exit("Bad keepalive '%s'", keepalive_arg);
+			dropbear_exit("%s %d: Bad keepalive '%s'", __FILE__, __LINE__, keepalive_arg);
 		}
 		opts.keepalive_secs = val;
 	}
@@ -441,7 +441,7 @@ void cli_getopts(int argc, char ** argv) {
 	if (idle_timeout_arg) {
 		unsigned int val;
 		if (m_str_to_uint(idle_timeout_arg, &val) == DROPBEAR_FAILURE) {
-			dropbear_exit("Bad idle_timeout '%s'", idle_timeout_arg);
+			dropbear_exit("%s %d: Bad idle_timeout '%s'", __FILE__, __LINE__, idle_timeout_arg);
 		}
 		opts.idle_timeout_secs = val;
 	}
@@ -589,7 +589,7 @@ static void parse_multihop_hostname(const char* orighostarg, const char* argv0) 
 	last_hop = strrchr(userhostarg, ',');
 	if (last_hop) {
 		if (last_hop == userhostarg) {
-			dropbear_exit("Bad multi-hop hostnames");
+			dropbear_exit("%s %d: Bad multi-hop hostnames", __FILE__, __LINE__);
 		}
 		*last_hop = '\0';
 		last_hop++;
@@ -604,7 +604,7 @@ static void parse_multihop_hostname(const char* orighostarg, const char* argv0) 
 		unsigned int cmd_len = 0;
 		char *passthrough_args = multihop_passthrough_args();
 		if (cli_opts.proxycmd) {
-			dropbear_exit("-J can't be used with multihop mode");
+			dropbear_exit("%s %d: -J can't be used with multihop mode", __FILE__, __LINE__);
 		}
 		if (cli_opts.remoteport == NULL) {
 			cli_opts.remoteport = "22";
@@ -660,7 +660,7 @@ static void parse_hostname(const char* orighostarg) {
 	}
 
 	if (cli_opts.remotehost[0] == '\0') {
-		dropbear_exit("Bad hostname");
+		dropbear_exit("%s %d: Bad hostname", __FILE__, __LINE__);
 	}
 }
 
@@ -697,7 +697,7 @@ static void add_netcat(const char* origstr) {
 	return;
 	
 fail:
-	dropbear_exit("Bad netcat endpoint '%s'", origstr);
+	dropbear_exit("%s %d: Bad netcat endpoint '%s'", __FILE__, __LINE__, origstr);
 }
 #endif
 
@@ -806,9 +806,9 @@ static void addforward(const char* origstr, m_list *fwdlist) {
 	return;
 
 fail:
-	dropbear_exit("Bad TCP forward '%s'", origstr);
+	dropbear_exit("%s %d: Bad TCP forward '%s'", __FILE__, __LINE__, origstr);
 
 badport:
-	dropbear_exit("Bad TCP port in '%s'", origstr);
+	dropbear_exit("%s %d: Bad TCP port in '%s'", __FILE__, __LINE__, origstr);
 }
 #endif

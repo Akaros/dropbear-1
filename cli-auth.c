@@ -146,7 +146,7 @@ void recv_msg_userauth_specific_60() {
 	}
 #endif
 
-	dropbear_exit("Unexpected userauth packet");
+	dropbear_exit("%s %d: Unexpected userauth packet", __FILE__, __LINE__);
 }
 
 void recv_msg_userauth_failure() {
@@ -167,7 +167,7 @@ void recv_msg_userauth_failure() {
 
 	if (cli_ses.state != USERAUTH_REQ_SENT) {
 		/* Perhaps we should be more fatal? */
-		dropbear_exit("Unexpected userauth failure");
+		dropbear_exit("%s %d: Unexpected userauth failure", __FILE__, __LINE__);
 	}
 
 	/* When DROPBEAR_CLI_IMMEDIATE_AUTH is set there will be an initial response for 

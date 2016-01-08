@@ -125,7 +125,7 @@ static void generic_dropbear_exit(int exitcode, const char* format,
 }
 
 void fail_assert(const char* expr, const char* file, int line) {
-	dropbear_exit("Failed assertion (%s:%d): `%s'", file, line, expr);
+	dropbear_exit("%s %d: Failed assertion (%s:%d): `%s'", __FILE__, __LINE__, file, line, expr);
 }
 
 static void generic_dropbear_log(int UNUSED(priority), const char* format, 
@@ -279,7 +279,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 		TRACE(("back to normal sigchld"))
 		/* Revert to normal sigchld handling */
 		if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
-			dropbear_exit("signal() error");
+			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 		}
 
 		/* redirect stdin/stdout */
@@ -288,7 +288,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 			(dup2(outfds[FDOUT], STDOUT_FILENO) < 0) ||
 			(ret_errfd && dup2(errfds[FDOUT], STDERR_FILENO) < 0)) {
 			TRACE(("leave noptycommand: error redirecting FDs"))
-			dropbear_exit("Child dup2() failure");
+			dropbear_exit("%s %d: Child dup2() failure", __FILE__, __LINE__);
 		}
 
 		close(infds[FDOUT]);
@@ -360,7 +360,7 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 
 	/* Re-enable SIGPIPE for the executed process */
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR) {
-		dropbear_exit("signal() error");
+		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 	}
 
 	/* close file descriptors except stdin/stdout/stderr
@@ -517,7 +517,7 @@ void m_close(int fd) {
 
 	if (val < 0 && errno != EBADF) {
 		/* Linux says EIO can happen */
-		dropbear_exit("Error closing fd %d, %s", fd, strerror(errno));
+		dropbear_exit("%s %d: Error closing fd %d, %s", __FILE__, __LINE__, fd, strerror(errno));
 	}
 }
 	
@@ -526,11 +526,11 @@ void * m_malloc(size_t size) {
 	void* ret;
 
 	if (size == 0) {
-		dropbear_exit("m_malloc failed");
+		dropbear_exit("%s %d: m_malloc failed", __FILE__, __LINE__);
 	}
 	ret = calloc(1, size);
 	if (ret == NULL) {
-		dropbear_exit("m_malloc failed");
+		dropbear_exit("%s %d: m_malloc failed", __FILE__, __LINE__);
 	}
 	return ret;
 
@@ -541,7 +541,7 @@ void * m_strdup(const char * str) {
 
 	ret = strdup(str);
 	if (ret == NULL) {
-		dropbear_exit("m_strdup failed");
+		dropbear_exit("%s %d: m_strdup failed", __FILE__, __LINE__);
 	}
 	return ret;
 }
@@ -551,11 +551,11 @@ void * m_realloc(void* ptr, size_t size) {
 	void *ret;
 
 	if (size == 0) {
-		dropbear_exit("m_realloc failed");
+		dropbear_exit("%s %d: m_realloc failed", __FILE__, __LINE__);
 	}
 	ret = realloc(ptr, size);
 	if (ret == NULL) {
-		dropbear_exit("m_realloc failed");
+		dropbear_exit("%s %d: m_realloc failed", __FILE__, __LINE__);
 	}
 	return ret;
 }
@@ -585,7 +585,7 @@ void setnonblocking(int fd) {
 			 * can't be set to non-blocking */
 			TRACE(("ignoring ENODEV for setnonblocking"))
 		} else {
-			dropbear_exit("Couldn't set nonblocking");
+			dropbear_exit("%s %d: Couldn't set nonblocking", __FILE__, __LINE__);
 		}
 	}
 	TRACE(("leave setnonblocking"))
@@ -677,7 +677,7 @@ time_t monotonic_now() {
 		struct timespec ts;
 		if (syscall(SYS_clock_gettime, clock_source, &ts) != 0) {
 			/* Intermittent clock failures should not happen */
-			dropbear_exit("Clock broke");
+			dropbear_exit("%s %d: Clock broke", __FILE__, __LINE__);
 		}
 		return ts.tv_sec;
 	}

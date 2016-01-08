@@ -83,7 +83,7 @@ void common_session_init(int sock_in, int sock_out) {
 	ses.last_packet_time_keepalive_sent = 0;
 	
 	if (pipe(ses.signal_pipe) < 0) {
-		dropbear_exit("Signal pipe failed");
+		dropbear_exit("%s %d: Signal pipe failed", __FILE__, __LINE__);
 	}
 	setnonblocking(ses.signal_pipe[0]);
 	setnonblocking(ses.signal_pipe[1]);
@@ -190,11 +190,11 @@ void session_loop(void(*loophandler)()) {
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
 
 		if (exitflag) {
-			dropbear_exit("Terminated by signal");
+			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
 		}
 		
 		if (val < 0 && errno != EINTR) {
-			dropbear_exit("Error in select");
+			dropbear_exit("%s %d: Error in select", __FILE__, __LINE__);
 		}
 
 		if (val <= 0) {
@@ -369,7 +369,7 @@ static void read_session_identification() {
 	/* Shall assume that 2.x will be backwards compatible. */
 	if (strncmp(ses.remoteident, "SSH-2.", 6) != 0
 			&& strncmp(ses.remoteident, "SSH-1.99-", 9) != 0) {
-		dropbear_exit("Incompatible remote version '%s'", ses.remoteident);
+		dropbear_exit("%s %d: Incompatible remote version '%s'", __FILE__, __LINE__, ses.remoteident);
 	}
 
 	TRACE(("remoteident: %s", ses.remoteident))
@@ -525,7 +525,7 @@ static void checktimeouts() {
 
 		if (now - ses.last_packet_time_keepalive_recv 
 			>= opts.keepalive_secs * DEFAULT_KEEPALIVE_LIMIT) {
-			dropbear_exit("Keepalive timeout");
+			dropbear_exit("%s %d: Keepalive timeout", __FILE__, __LINE__);
 		}
 	}
 

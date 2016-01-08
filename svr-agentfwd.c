@@ -157,7 +157,7 @@ void svr_agentcleanup(struct ChanSess * chansess) {
 		gid = getgid();
 		if ((setegid(ses.authstate.pw_gid)) < 0 ||
 			(seteuid(ses.authstate.pw_uid)) < 0) {
-			dropbear_exit("Failed to set euid");
+			dropbear_exit("%s %d: Failed to set euid", __FILE__, __LINE__);
 		}
 
 		/* 2 for "/" and "\0" */
@@ -172,7 +172,7 @@ void svr_agentcleanup(struct ChanSess * chansess) {
 
 		if ((seteuid(uid)) < 0 ||
 			(setegid(gid)) < 0) {
-			dropbear_exit("Failed to revert euid");
+			dropbear_exit("%s %d: Failed to revert euid", __FILE__, __LINE__);
 		}
 
 		m_free(chansess->agentfile);
@@ -220,7 +220,7 @@ static int bindagent(int fd, struct ChanSess * chansess) {
 	gid = getgid();
 	if ((setegid(ses.authstate.pw_gid)) < 0 ||
 		(seteuid(ses.authstate.pw_uid)) < 0) {
-		dropbear_exit("Failed to set euid");
+		dropbear_exit("%s %d: Failed to set euid", __FILE__, __LINE__);
 	}
 
 	memset((void*)&addr, 0x0, sizeof(addr));
@@ -263,7 +263,7 @@ bindsocket:
 out:
 	if ((seteuid(uid)) < 0 ||
 		(setegid(gid)) < 0) {
-		dropbear_exit("Failed to revert euid");
+		dropbear_exit("%s %d: Failed to revert euid", __FILE__, __LINE__);
 	}
 	return ret;
 }

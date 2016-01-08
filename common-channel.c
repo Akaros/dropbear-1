@@ -195,9 +195,9 @@ static struct Channel* getchannel_msg(const char* kind) {
 	chan = buf_getint(ses.payload);
 	if (chan >= ses.chansize || ses.channels[chan] == NULL) {
 		if (kind) {
-			dropbear_exit("%s for unknown channel %d", kind, chan);
+			dropbear_exit("%s %d: %s for unknown channel %d", __FILE__, __LINE__, kind, chan);
 		} else {
-			dropbear_exit("Unknown channel %d", chan);
+			dropbear_exit("%s %d: Unknown channel %d", __FILE__, __LINE__, chan);
 		}
 	}
 	return ses.channels[chan];
@@ -832,7 +832,7 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 	TRACE(("enter recv_msg_channel_data"))
 
 	if (channel->recv_eof) {
-		dropbear_exit("Received data after eof");
+		dropbear_exit("%s %d: Received data after eof", __FILE__, __LINE__);
 	}
 
 	if (fd < 0 || !cbuf) {
@@ -851,7 +851,7 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 	 * lead to corrupted file transfers etc (chunks missed etc). It's better to
 	 * just die horribly */
 	if (datalen > maxdata) {
-		dropbear_exit("Oversized packet");
+		dropbear_exit("%s %d: Oversized packet", __FILE__, __LINE__);
 	}
 
 	dropbear_assert(channel->recvwindow >= datalen);
@@ -1170,7 +1170,7 @@ void recv_msg_channel_open_confirmation() {
 	channel = getchannel();
 
 	if (!channel->await_open) {
-		dropbear_exit("Unexpected channel reply");
+		dropbear_exit("%s %d: Unexpected channel reply", __FILE__, __LINE__);
 	}
 	channel->await_open = 0;
 
@@ -1207,7 +1207,7 @@ void recv_msg_channel_open_failure() {
 	channel = getchannel();
 
 	if (!channel->await_open) {
-		dropbear_exit("Unexpected channel reply");
+		dropbear_exit("%s %d: Unexpected channel reply", __FILE__, __LINE__);
 	}
 	channel->await_open = 0;
 

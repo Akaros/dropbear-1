@@ -1075,7 +1075,7 @@ static int openssh_write(const char *filename, sign_key *key,
 				curve_oid = OID_SEC521R1_BLOB;
 				break;
 			default:
-				dropbear_exit("Internal error");
+				dropbear_exit("%s %d: Internal error", __FILE__, __LINE__);
 		}
 
 		buf_incrwritepos(seq_buf,
@@ -1092,7 +1092,7 @@ static int openssh_write(const char *filename, sign_key *key,
 		buf_putbyte(seq_buf, 0);
 		err = ecc_ansi_x963_export(*eck, buf_getwriteptr(seq_buf, pubkey_size), &pubkey_size);
 		if (err != CRYPT_OK) {
-			dropbear_exit("ECC error");
+			dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
 		}
 		buf_incrwritepos(seq_buf, pubkey_size);
 

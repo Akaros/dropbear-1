@@ -98,7 +98,7 @@ void cli_connected(int result, int sock, void* userdata, const char *errstring)
 {
 	struct sshsession *myses = userdata;
 	if (result == DROPBEAR_FAILURE) {
-		dropbear_exit("Connect failed: %s", errstring);
+		dropbear_exit("%s %d: Connect failed: %s", __FILE__, __LINE__, errstring);
 	}
 	myses->sock_in = myses->sock_out = sock;
 	update_channel_prio();
@@ -261,7 +261,7 @@ static void cli_sessionloop() {
 			
 		case USERAUTH_FAIL_RCVD:
 			if (cli_auth_try() == DROPBEAR_FAILURE) {
-				dropbear_exit("No auth methods could be used.");
+				dropbear_exit("%s %d: No auth methods could be used.", __FILE__, __LINE__);
 			}
 			cli_ses.state = USERAUTH_REQ_SENT;
 			TRACE(("leave cli_sessionloop: cli_auth_try"))
@@ -283,12 +283,12 @@ static void cli_sessionloop() {
 				   is confusing, though stdout/stderr could be useful. */
 				devnull = open(_PATH_DEVNULL, O_RDONLY);
 				if (devnull < 0) {
-					dropbear_exit("Opening /dev/null: %d %s",
+					dropbear_exit("%s %d: Opening /dev/null: %d %s", __FILE__, __LINE__,
 							errno, strerror(errno));
 				}
 				dup2(devnull, STDIN_FILENO);
 				if (daemon(0, 1) < 0) {
-					dropbear_exit("Backgrounding failed: %d %s", 
+					dropbear_exit("%s %d: Backgrounding failed: %d %s", __FILE__, __LINE__, 
 							errno, strerror(errno));
 				}
 			}
@@ -368,7 +368,7 @@ static void cli_remoteclosed() {
 	m_close(ses.sock_out);
 	ses.sock_in = -1;
 	ses.sock_out = -1;
-	dropbear_exit("Remote closed the connection");
+	dropbear_exit("%s %d: Remote closed the connection", __FILE__, __LINE__);
 }
 
 /* Operates in-place turning dirty (untrusted potentially containing control

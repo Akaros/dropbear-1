@@ -73,7 +73,7 @@ parse_ciphers_macs()
 			char *ciphers = algolist_string(sshciphers);
 			dropbear_log(LOG_INFO, "Available ciphers:\n%s\n", ciphers);
 			m_free(ciphers);
-			dropbear_exit(".");
+			dropbear_exit("%s %d: .", __FILE__, __LINE__);
 		}
 
 		if (strcmp(opts.cipher_list, "none") == 0)
@@ -84,7 +84,7 @@ parse_ciphers_macs()
 
 		if (check_user_algos(opts.cipher_list, sshciphers, "cipher") == 0)
 		{
-			dropbear_exit("No valid ciphers specified for '-c'");
+			dropbear_exit("%s %d: No valid ciphers specified for '-c'", __FILE__, __LINE__);
 		}
 	}
 
@@ -95,12 +95,12 @@ parse_ciphers_macs()
 			char *macs = algolist_string(sshhashes);
 			dropbear_log(LOG_INFO, "Available MACs:\n%s\n", macs);
 			m_free(macs);
-			dropbear_exit(".");
+			dropbear_exit("%s %d: .", __FILE__, __LINE__);
 		}
 
 		if (check_user_algos(opts.mac_list, sshhashes, "MAC") == 0)
 		{
-			dropbear_exit("No valid MACs specified for '-m'");
+			dropbear_exit("%s %d: No valid MACs specified for '-m'", __FILE__, __LINE__);
 		}
 	}
 }

@@ -93,7 +93,7 @@ void recv_msg_userauth_info_request() {
 	num_prompts = buf_getint(ses.payload);
 	
 	if (num_prompts >= DROPBEAR_MAX_CLI_INTERACT_PROMPTS) {
-		dropbear_exit("Too many prompts received for keyboard-interactive");
+		dropbear_exit("%s %d: Too many prompts received for keyboard-interactive", __FILE__, __LINE__);
 	}
 
 	/* we'll build the response as we go */
