@@ -202,7 +202,7 @@ static void ask_to_confirm(unsigned char* keyblob, unsigned int keybloblen,
 			algoname,
 			fp);
 	m_free(fp);
-
+fprintf(stderr, "open the tty\n");
 	tty = fopen(_PATH_TTY, "r");
 	if (tty) {
 		response = getc(tty);

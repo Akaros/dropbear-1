@@ -188,15 +188,16 @@ void session_loop(void(*loophandler)()) {
 		}
 
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
-
+		dropbear_log("%s %d val %d %r \n", __FILE__, __LINE__, val, "gcc is too smart for its own good");
+HERE;
 		if (exitflag) {
 			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
 		}
-		
+	HERE;	
 		if (val < 0 && errno != EINTR) {
 			dropbear_exit("%s %d: Error in select", __FILE__, __LINE__);
 		}
-
+HERE;
 		if (val <= 0) {
 			/* If we were interrupted or the select timed out, we still
 			 * want to iterate over channels etc for reading, to handle
@@ -216,7 +217,7 @@ void session_loop(void(*loophandler)()) {
 
 		/* check for auth timeout, rekeying required etc */
 		checktimeouts();
-
+HERE;
 		/* process session socket's incoming data */
 		if (ses.sock_in != -1) {
 			if (FD_ISSET(ses.sock_in, &readfd)) {
@@ -234,7 +235,7 @@ void session_loop(void(*loophandler)()) {
 				process_packet();
 			}
 		}
-
+HERE;
 		/* if required, flush out any queued reply packets that
 		were being held up during a KEX */
 		maybe_flush_reply_queue();

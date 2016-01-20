@@ -588,10 +588,10 @@ static int sessionpty(struct ChanSess * chansess) {
 		dropbear_exit("%s %d: Out of memory", __FILE__, __LINE__); /* TODO disconnect */
 	}
 
+	if (0) {
 	pw = getpwnam(ses.authstate.pw_name);
 	if (!pw)
 		dropbear_exit("%s %d: getpwnam failed after succeeding previously", __FILE__, __LINE__);
-	if (0) {
 		pty_setowner(pw, chansess->tty);
 	}
 		
@@ -790,6 +790,7 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		/* child */
 		
 		TRACE(("back to normal sigchld"))
+{ char c; while (read(chansess->slave, &c, 1)  > 0) { if (write(chansess->slave, &c, 1) < 1) {} }}
 		/* Revert to normal sigchld handling */
 		if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
 			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);

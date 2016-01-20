@@ -180,12 +180,14 @@ void main_noinetd() {
 		
 		/* listening sockets */
 		for (i = 0; i < listensockcount; i++) {
+fprintf(stdout, "%s: Set sock %d\n", __FILE__, listensocks[i]);
 			FD_SET(listensocks[i], &fds);
 		}
 
 		/* pre-authentication clients */
 		for (i = 0; i < MAX_UNAUTH_CLIENTS; i++) {
 			if (childpipes[i] >= 0) {
+fprintf(stdout, "%s: Set pipefd %d\n", __FILE__, childpipes[i]);
 				FD_SET(childpipes[i], &fds);
 				maxsock = MAX(maxsock, childpipes[i]);
 			}
@@ -207,7 +209,7 @@ void main_noinetd() {
 			if (errno == EINTR) {
 				continue;
 			}
-			dropbear_exit("%s %d: Listening socket error", __FILE__, __LINE__);
+			dropbear_exit("%s %d: Listening socket error %d %r", __FILE__, __LINE__, val, val);
 		}
 
 		/* close fds which have been authed or closed - svr-auth.c handles
