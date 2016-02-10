@@ -155,14 +155,14 @@ void read_packet() {
 		/* Read the first blocksize of the packet, so we can decrypt it and
 		 * find the length of the whole packet */
 		ret = read_packet_init();
-
+HERE;
 		if (ret == DROPBEAR_FAILURE) {
 			/* didn't read enough to determine the length */
 			TRACE2(("leave read_packet: packetinit done"))
 			return;
 		}
 	}
-
+HERE;
 	/* Attempt to read the remainder of the packet, note that there
 	 * mightn't be any available (EAGAIN) */
 	maxlen = ses.readbuf->len - ses.readbuf->pos;
@@ -172,7 +172,7 @@ void read_packet() {
 		 */
 		len = 0;
 	} else {
-		len = read(ses.sock_in, buf_getptr(ses.readbuf, maxlen), maxlen);
+		len = nbread(ses.sock_in, buf_getptr(ses.readbuf, maxlen), maxlen);
 
 		if (len == 0) {
 			ses.remoteclosed();
@@ -223,7 +223,7 @@ static int read_packet_init() {
 	maxlen = blocksize - ses.readbuf->pos;
 			
 	/* read the rest of the packet if possible */
-	slen = read(ses.sock_in, buf_getwriteptr(ses.readbuf, maxlen),
+	slen = nbread(ses.sock_in, buf_getwriteptr(ses.readbuf, maxlen),
 			maxlen);
 	if (slen == 0) {
 		ses.remoteclosed();

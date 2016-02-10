@@ -185,6 +185,7 @@ void set_connect_fds(fd_set *writefd) {
 		}
 		if (c->sock >= 0) {
 			FD_SET(c->sock, writefd);
+			TRACE(("FD_SET set_connect_fds %d\n", writefd));
 		} else {
 			/* Final failure */
 			if (!c->errstring) {

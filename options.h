@@ -256,7 +256,7 @@ Homedir is prepended unless path begins with / */
  * connection without blocking. In addition /dev/random is used for seeding
  * rsa/dss key generation */
 #ifdef __akaros__
-#define DROPBEAR_URANDOM_DEV "#cons/urandom"
+#define DROPBEAR_URANDOM_DEV "#random/urandom"
 #else
 #define DROPBEAR_URANDOM_DEV "/dev/urandom"
 #endif
@@ -346,7 +346,11 @@ be overridden at runtime with -I. 0 disables idle timeouts */
 #define DEFAULT_IDLE_TIMEOUT 0
 
 /* The default path. This will often get replaced by the shell */
+#if 1
+#define DEFAULT_PATH "/sbin:/bin"
+#else
 #define DEFAULT_PATH "/usr/bin:/bin"
+#endif
 
 /* Some other defines (that mostly should be left alone) are defined
  * in sysoptions.h */

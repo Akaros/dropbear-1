@@ -180,19 +180,19 @@ void main_noinetd() {
 		
 		/* listening sockets */
 		for (i = 0; i < listensockcount; i++) {
-fprintf(stdout, "%s: Set sock %d\n", __FILE__, listensocks[i]);
+fprintf(stderr, "%s: Set sock %d\n", __FILE__, listensocks[i]);
 			FD_SET(listensocks[i], &fds);
 		}
 
 		/* pre-authentication clients */
 		for (i = 0; i < MAX_UNAUTH_CLIENTS; i++) {
 			if (childpipes[i] >= 0) {
-fprintf(stdout, "%s: Set pipefd %d\n", __FILE__, childpipes[i]);
+fprintf(stderr, "%s: Set pipefd %d\n", __FILE__, childpipes[i]);
 				FD_SET(childpipes[i], &fds);
 				maxsock = MAX(maxsock, childpipes[i]);
 			}
 		}
-
+fprintf(stderr, "select on %d sockets\n", maxsock+1);
 		val = select(maxsock+1, &fds, NULL, NULL, NULL);
 
 		if (exitflag) {

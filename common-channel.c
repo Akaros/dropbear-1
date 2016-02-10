@@ -213,7 +213,7 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 	/* Listeners such as TCP, X11, agent-auth */
 	struct Channel *channel;
 	unsigned int i;
-
+HERE;
 	/* foreach channel */
 	for (i = 0; i < ses.chansize; i++) {
 		/* Close checking only needs to occur for channels that had IO events */
@@ -580,21 +580,25 @@ void setchannelfds(fd_set *readfds, fd_set *writefds, int allow_reads) {
 		   && ((ses.dataallowed && allow_reads) || channel->read_mangler)) {
 
 			if (channel->readfd >= 0) {
+dropbear_log("Set channel readfd %d into readfds\n", channel->readfd);
 				FD_SET(channel->readfd, readfds);
 			}
 			
 			if (ERRFD_IS_READ(channel) && channel->errfd >= 0) {
+dropbear_log("Set channel errfd %d into readfds\n", channel->errfd);
 					FD_SET(channel->errfd, readfds);
 			}
 		}
 
 		/* Stuff from the wire */
 		if (channel->writefd >= 0 && cbuf_getused(channel->writebuf) > 0) {
+dropbear_log("Set channel writefd %d into werite\n", channel->errfd);
 				FD_SET(channel->writefd, writefds);
 		}
 
 		if (ERRFD_IS_WRITE(channel) && channel->errfd >= 0 
 				&& cbuf_getused(channel->extrabuf) > 0) {
+dropbear_log("Set channel errfd %d into writefds\n", channel->errfd);
 				FD_SET(channel->errfd, writefds);
 		}
 

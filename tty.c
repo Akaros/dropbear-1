@@ -51,12 +51,15 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 	 */
 	*ptyfd = process[0];
 	*ttyfd = process[1];
+HERE;
 	/* from child to parent. Very little interpreation. */
 	switch(fork()) {
 	case -1:
 		return -1;
 	case 0:
+HERE;
 		while((nfr = read(process[1], buf, sizeof buf)) > 0){
+HERE;
 if (echo) write(1, buf, nfr);
 			int i, j;
 			j = 0;
@@ -87,7 +90,9 @@ if (echo) write(1, buf, nfr);
 		return -1;
 	case 0:
 		j = 0;
+HERE;
 		while((nto = read(process[0], buf, sizeof buf)) > 0){
+HERE;
 			int oldj;
 			oldj = j;
 			for(i = 0; i < nto; i++){
@@ -156,8 +161,9 @@ if (echo) write(1, buf, nfr);
 			}
 		}
 		close(process[1]);
+		sysfatal("all done");
 	}
-	sysfatal("all done");
+	return 0;
 }
 
 void

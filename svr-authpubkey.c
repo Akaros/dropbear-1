@@ -367,6 +367,11 @@ out:
  * g-w, o-w */
 static int checkpubkeyperms() {
 
+#if 1
+	/* we're not a timesharing system anyway. */
+	return DROPBEAR_SUCCESS;
+#endif
+
 	char* filename = NULL; 
 	int ret = DROPBEAR_FAILURE;
 	unsigned int len;
@@ -435,7 +440,7 @@ static int checkfileperm(char * filename) {
 	/* check permissions - don't want group or others +w */
 	if (filestat.st_mode & (S_IWGRP | S_IWOTH)) {
 		badperm = 1;
-		TRACE(("wrong perms"))
+		TRACE(("%s: wrong perms", filename))
 	}
 	if (badperm) {
 		if (!ses.authstate.perm_warn) {

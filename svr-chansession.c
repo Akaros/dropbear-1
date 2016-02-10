@@ -98,11 +98,13 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 
 	const int saved_errno = errno;
 
+HERE;
 	/* Make channel handling code look for closed channels */
 	ses.channel_signal_pending = 1;
 
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+HERE;
 		TRACE(("sigchld handler: pid %d", pid))
 
 		exit = NULL;
@@ -140,12 +142,14 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 		
 		/* Make sure that the main select() loop wakes up */
 		while (1) {
+HERE;
 			/* isserver is just a random byte to write. We can't do anything
 			about an error so should just ignore it */
 			if (write(ses.signal_pipe[1], &ses.isserver, 1) == 1
 					|| errno != EINTR) {
 				break;
 			}
+HERE;
 		}
 	}
 
@@ -566,6 +570,7 @@ static int sessionpty(struct ChanSess * chansess) {
 		TRACE(("leave sessionpty : pty forbidden by public key option"))
 		return DROPBEAR_FAILURE;
 	}
+HERE;
 
 	chansess->term = buf_getstring(ses.payload, &termlen);
 	if (termlen > MAX_TERM_LEN) {
@@ -574,19 +579,24 @@ static int sessionpty(struct ChanSess * chansess) {
 		return DROPBEAR_FAILURE;
 	}
 
+HERE;
 	/* allocate the pty */
 	if (chansess->master != -1) {
 		dropbear_exit("%s %d: Multiple pty requests", __FILE__, __LINE__);
 	}
+HERE;
 	if (pty_allocate(&chansess->master, &chansess->slave, namebuf, 64) == 0) {
 		TRACE(("leave sessionpty: failed to allocate pty"))
 		return DROPBEAR_FAILURE;
 	}
+HERE;
 	
 	chansess->tty = m_strdup(namebuf);
+HERE;
 	if (!chansess->tty) {
 		dropbear_exit("%s %d: Out of memory", __FILE__, __LINE__); /* TODO disconnect */
 	}
+HERE;
 
 	if (0) {
 	pw = getpwnam(ses.authstate.pw_name);
@@ -595,12 +605,15 @@ static int sessionpty(struct ChanSess * chansess) {
 		pty_setowner(pw, chansess->tty);
 	}
 		
+HERE;
 		/* Set up the rows/col counts */
 		sessionwinchange(chansess);
 		
+HERE;
 		/* Read the terminal modes */
 		get_termmodes(chansess);
 		
+HERE;
 		TRACE(("leave sessionpty"))
 	return DROPBEAR_SUCCESS;
 }

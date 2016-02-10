@@ -50,6 +50,28 @@ int sessinitdone = 0; /* GLOBAL */
 /* this is set when we get SIGINT or SIGTERM, the handler is in main.c */
 int exitflag = 0; /* GLOBAL */
 
+int nbread(int fd, void *va, int n)
+{
+	static struct stat buf[8];
+	int amt = 0;
+
+	if (fstat(fd, &buf[0]) < 0) {
+		dropbear_log(LOG_WARNING, "stat fd %d: %r\n", fd);
+		return -1;
+	}
+//dropbear_log(LOG_WARNING, "nbread: fd %d has %ld \n", fd, buf[0].st_size);
+	if (buf[0].st_size > 0) {
+		if (n > buf[0].st_size)
+			n = buf[0].st_size;
+//dropbear_log(LOG_WARNING, "nbread: try for %d\n", n);
+		amt = read(fd, va, n);
+	}
+
+	if (amt < 0)
+		dropbear_log(LOG_WARNING, "fd %d: %r\n", fd);
+
+	return amt;
+}
 /* called only at the start of a session, set up initial state */
 void common_session_init(int sock_in, int sock_out) {
 	time_t now;
@@ -161,6 +183,7 @@ void session_loop(void(*loophandler)()) {
 
 		/* We get woken up when signal handlers write to this pipe.
 		   SIGCHLD in svr-chansession is the only one currently. */
+dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.signal_pipe[0]);
 		FD_SET(ses.signal_pipe[0], &readfd);
 
 		/* set up for channels which can be read/written */
@@ -178,17 +201,20 @@ void session_loop(void(*loophandler)()) {
 		if (ses.sock_in != -1 
 			&& (ses.remoteident || isempty(&ses.writequeue)) 
 			&& writequeue_has_space) {
+dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.sock_in);
 			FD_SET(ses.sock_in, &readfd);
 		}
 
 		/* Ordering is important, this test must occur after any other function
 		might have queued packets (such as connection handlers) */
 		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
+dropbear_log(LOG_WARNING, "main loop, Set %d into writefd\n", ses.sock_in);
 			FD_SET(ses.sock_out, &writefd);
 		}
 
+dropbear_log(LOG_WARNING, "select on %d sockets\n", ses.maxfd+1);
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
-		dropbear_log("%s %d val %d %r \n", __FILE__, __LINE__, val, "gcc is too smart for its own good");
+		dropbear_log(LOG_WARNING, "after select in main loop %s %d val %d %r \n", __FILE__, __LINE__, val, "gcc is too smart for its own good");
 HERE;
 		if (exitflag) {
 			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
@@ -199,6 +225,7 @@ HERE;
 		}
 HERE;
 		if (val <= 0) {
+HERE;
 			/* If we were interrupted or the select timed out, we still
 			 * want to iterate over channels etc for reading, to handle
 			 * server processes exiting etc. 
@@ -211,20 +238,28 @@ HERE;
 		any thing with the data, since the pipe's purpose is purely to
 		wake up the select() above. */
 		if (FD_ISSET(ses.signal_pipe[0], &readfd)) {
-			char x;
-			while (read(ses.signal_pipe[0], &x, 1) > 0) {}
+HERE;
+			static char x[4096];
+	
+				dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
+				while (nbread(ses.signal_pipe[0], x, sizeof(x)) > 0);
+HERE;
 		}
 
 		/* check for auth timeout, rekeying required etc */
 		checktimeouts();
 HERE;
+dropbear_log(LOG_WARNING, "ses.sock_in  readfd %d\n", ses.sock_in);
 		/* process session socket's incoming data */
 		if (ses.sock_in != -1) {
 			if (FD_ISSET(ses.sock_in, &readfd)) {
+HERE;
 				if (!ses.remoteident) {
+HERE;
 					/* blocking read of the version string */
 					read_session_identification();
 				} else {
+HERE;
 					read_packet();
 				}
 			}
@@ -232,6 +267,7 @@ HERE;
 			/* Process the decrypted packet. After this, the read buffer
 			 * will be ready for a new packet */
 			if (ses.payload != NULL) {
+HERE;
 				process_packet();
 			}
 		}
@@ -248,6 +284,7 @@ HERE;
 
 		/* process session socket's outgoing data */
 		if (ses.sock_out != -1) {
+HERE;
 			if (!isempty(&ses.writequeue)) {
 				write_packet();
 			}
@@ -257,6 +294,7 @@ HERE;
 		if (loophandler) {
 			loophandler();
 		}
+HERE;
 
 	} /* for(;;) */
 	
@@ -393,13 +431,13 @@ static int ident_readln(int fd, char* buf, int count) {
 		return -1;
 	}
 
-	FD_ZERO(&fds);
+//	FD_ZERO(&fds);
 
 	/* select since it's a non-blocking fd */
 	
 	/* leave space to null-terminate */
 	while (pos < count-1) {
-
+#if 0
 		FD_SET(fd, &fds);
 
 		timeout.tv_sec = 1;
@@ -411,14 +449,14 @@ static int ident_readln(int fd, char* buf, int count) {
 			TRACE(("leave ident_readln: select error"))
 			return -1;
 		}
-
+#endif
 		checktimeouts();
 		
 		/* Have to go one byte at a time, since we don't want to read past
 		 * the end, and have to somehow shove bytes back into the normal
 		 * packet reader */
-		if (FD_ISSET(fd, &fds)) {
-			num = read(fd, &in, 1);
+//		if (FD_ISSET(fd, &fds)) {
+			num = nbread(fd, &in, 1);
 			/* a "\n" is a newline, "\r" we want to read in and keep going
 			 * so that it won't be read as part of the next line */
 			if (num < 0) {
@@ -432,7 +470,7 @@ static int ident_readln(int fd, char* buf, int count) {
 			if (num == 0) {
 				/* EOF */
 				TRACE(("leave ident_readln: EOF"))
-				return -1;
+				continue; //return -1;
 			}
 			if (in == '\n') {
 				/* end of ident string */
@@ -443,7 +481,7 @@ static int ident_readln(int fd, char* buf, int count) {
 				buf[pos] = in;
 				pos++;
 			}
-		}
+		//}
 	}
 
 	buf[pos] = '\0';
@@ -580,6 +618,14 @@ const char* get_user_shell() {
 	}
 }
 void fill_passwd(const char* username) {
+// Let's avoid all the ghetto stuff in akaros libc for now ...
+#if 1
+	ses.authstate.pw_uid = 0;
+	ses.authstate.pw_gid = 0;
+	ses.authstate.pw_name = m_strdup("root");
+	ses.authstate.pw_dir = m_strdup("/root");
+	ses.authstate.pw_shell = m_strdup("/bin/sh");
+#else
 	struct passwd *pw = NULL;
 	if (ses.authstate.pw_name)
 		m_free(ses.authstate.pw_name);
@@ -592,7 +638,8 @@ void fill_passwd(const char* username) {
 
 	pw = getpwnam(username);
 	if (!pw) {
-		return;
+		dropbear_log(LOG_WARNING, "FUCK. getwname for %s failed", username);
+		//return;
 	}
 	ses.authstate.pw_uid = pw->pw_uid;
 	ses.authstate.pw_gid = pw->pw_gid;
@@ -614,6 +661,7 @@ void fill_passwd(const char* username) {
 		}
 		ses.authstate.pw_passwd = m_strdup(passwd_crypt);
 	}
+#endif
 }
 
 /* Called when channels are modified */
