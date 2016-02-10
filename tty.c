@@ -55,11 +55,11 @@ HERE;
 	/* from child to parent. Very little interpreation. */
 	switch(fork()) {
 	case -1:
-		return -1;
+		return 0;
 	case 0:
 HERE;
-		while((nfr = read(process[1], buf, sizeof buf)) > 0){
-HERE;
+		while((nfr = nbread(process[1], buf, 1 /*sizeof buf*/)) >= 0){
+if (nfr == 0) continue;
 if (echo) write(1, buf, nfr);
 			int i, j;
 			j = 0;
@@ -78,22 +78,24 @@ if (echo) write(1, buf, nfr);
 			if(write(process[0], buf, j) != j)
 				sysfatal("write");
 		}
-		fprintf(stdout, "aux/tty: got eof\n");
+		write(1, "FUCK1\n", 6);
+		//fprintf(stdout, "----------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>aux/tty: got eof\n");
 		// not yet.
 		//postnote(PNPROC, getppid(), "interrupt");
+		while(1);
 		sysfatal("eof");
 	}
 
 	/* from parent to child. All kinds of tty handling. */
 	switch(fork()) {
 	case -1:
-		return -1;
+		return 0;
 	case 0:
 		j = 0;
 HERE;
-		while((nto = read(process[0], buf, sizeof buf)) > 0){
-HERE;
+		while((nto = nbread(process[0], buf, 1 /*sizeof buf*/)) >= 0){
 			int oldj;
+if (nto == 0) continue;
 			oldj = j;
 			for(i = 0; i < nto; i++){
 				if(buf[i] == '\r' || buf[i] == '\n'){
@@ -161,9 +163,12 @@ HERE;
 			}
 		}
 		close(process[1]);
-		sysfatal("all done");
+		write(1, "FUCK1\n", 6);
+		//printf("----------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>all done");
+		while(1);
+		sysfatal("----------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>all done");
 	}
-	return 0;
+	return 1;
 }
 
 void

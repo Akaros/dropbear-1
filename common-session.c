@@ -185,12 +185,15 @@ void session_loop(void(*loophandler)()) {
 		   SIGCHLD in svr-chansession is the only one currently. */
 dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.signal_pipe[0]);
 		FD_SET(ses.signal_pipe[0], &readfd);
+HERE;
 
 		/* set up for channels which can be read/written */
 		setchannelfds(&readfd, &writefd, writequeue_has_space);
+HERE;
 
 		/* Pending connections to test */
 		set_connect_fds(&writefd);
+HERE;
 
 		/* We delay reading from the input socket during initial setup until
 		after we have written out our initial KEXINIT packet (empty writequeue). 
@@ -204,6 +207,7 @@ dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.signal_pipe[0])
 dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.sock_in);
 			FD_SET(ses.sock_in, &readfd);
 		}
+HERE;
 
 		/* Ordering is important, this test must occur after any other function
 		might have queued packets (such as connection handlers) */
@@ -211,6 +215,7 @@ dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.sock_in);
 dropbear_log(LOG_WARNING, "main loop, Set %d into writefd\n", ses.sock_in);
 			FD_SET(ses.sock_out, &writefd);
 		}
+HERE;
 
 dropbear_log(LOG_WARNING, "select on %d sockets\n", ses.maxfd+1);
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);

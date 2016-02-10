@@ -341,7 +341,7 @@ char* getpass_or_cancel(char* prompt)
 #endif
 
 	password = getpass(prompt);
-
+write(1, "fuck\n", 5);
 	/* 0x03 is a ctrl-c character in the buffer. */
 	if (password == NULL || strchr(password, '\3') != NULL) {
 		dropbear_close("Interrupted.");

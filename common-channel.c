@@ -564,49 +564,55 @@ void setchannelfds(fd_set *readfds, fd_set *writefds, int allow_reads) {
 	unsigned int i;
 	struct Channel * channel;
 	
+HERE;
 	for (i = 0; i < ses.chansize; i++) {
 
+HERE;
 		channel = ses.channels[i];
 		if (channel == NULL) {
 			continue;
 		}
+HERE;
 
 		/* Stuff to put over the wire. 
 		Avoid queueing data to send if we're in the middle of a 
 		key re-exchange (!dataallowed), but still read from the 
 		FD if there's the possibility of "~."" to kill an 
 		interactive session (the read_mangler) */
+HERE;
 		if (channel->transwindow > 0
 		   && ((ses.dataallowed && allow_reads) || channel->read_mangler)) {
 
 			if (channel->readfd >= 0) {
-dropbear_log("Set channel readfd %d into readfds\n", channel->readfd);
+dropbear_log(LOG_WARNING, "Set channel readfd %d into readfds\n", channel->readfd);
 				FD_SET(channel->readfd, readfds);
 			}
 			
 			if (ERRFD_IS_READ(channel) && channel->errfd >= 0) {
-dropbear_log("Set channel errfd %d into readfds\n", channel->errfd);
+dropbear_log(LOG_WARNING, "Set channel errfd %d into readfds\n", channel->errfd);
 					FD_SET(channel->errfd, readfds);
 			}
 		}
 
 		/* Stuff from the wire */
 		if (channel->writefd >= 0 && cbuf_getused(channel->writebuf) > 0) {
-dropbear_log("Set channel writefd %d into werite\n", channel->errfd);
+dropbear_log(LOG_WARNING, "Set channel writefd %d into werite\n", channel->errfd);
 				FD_SET(channel->writefd, writefds);
 		}
 
 		if (ERRFD_IS_WRITE(channel) && channel->errfd >= 0 
 				&& cbuf_getused(channel->extrabuf) > 0) {
-dropbear_log("Set channel errfd %d into writefds\n", channel->errfd);
+dropbear_log(LOG_WARNING, "Set channel errfd %d into writefds\n", channel->errfd);
 				FD_SET(channel->errfd, writefds);
 		}
 
 	} /* foreach channel */
 
+HERE;
 #ifdef USING_LISTENERS
 	set_listener_fds(readfds);
 #endif
+HERE;
 
 }
 
@@ -650,6 +656,7 @@ static void remove_channel(struct Channel * channel) {
 
 	TRACE(("enter remove_channel"))
 	TRACE(("channel index is %d", channel->index))
+TRACE(("OH, FUCK THIS")); return;
 
 	cbuf_free(channel->writebuf);
 	channel->writebuf = NULL;
