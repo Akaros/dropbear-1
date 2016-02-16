@@ -50,11 +50,12 @@ int sessinitdone = 0; /* GLOBAL */
 /* this is set when we get SIGINT or SIGTERM, the handler is in main.c */
 int exitflag = 0; /* GLOBAL */
 
+#if 0
 int nbread(int fd, void *va, int n)
 {
 	static struct stat buf[8];
 	int amt = 0;
-
+	
 	if (fstat(fd, &buf[0]) < 0) {
 		dropbear_log(LOG_WARNING, "stat fd %d: %r\n", fd);
 		return -1;
@@ -72,6 +73,7 @@ int nbread(int fd, void *va, int n)
 
 	return amt;
 }
+#endif
 /* called only at the start of a session, set up initial state */
 void common_session_init(int sock_in, int sock_out) {
 	time_t now;
@@ -176,6 +178,9 @@ void session_loop(void(*loophandler)()) {
 		const int writequeue_has_space = (ses.writequeue_len <= 2*TRANS_MAX_PAYLOAD_LEN);
 
 		timeout.tv_sec = select_timeout();
+#if 1
+		timeout.tv_sec = 1;
+#endif
 		timeout.tv_usec = 0;
 		FD_ZERO(&writefd);
 		FD_ZERO(&readfd);
@@ -247,7 +252,7 @@ HERE;
 			static char x[4096];
 	
 				dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
-				while (nbread(ses.signal_pipe[0], x, sizeof(x)) > 0);
+				while (read(ses.signal_pipe[0], x, sizeof(x)) > 0);
 HERE;
 		}
 
@@ -436,13 +441,12 @@ static int ident_readln(int fd, char* buf, int count) {
 		return -1;
 	}
 
-//	FD_ZERO(&fds);
+	FD_ZERO(&fds);
 
 	/* select since it's a non-blocking fd */
 	
 	/* leave space to null-terminate */
 	while (pos < count-1) {
-#if 0
 		FD_SET(fd, &fds);
 
 		timeout.tv_sec = 1;
@@ -454,14 +458,13 @@ static int ident_readln(int fd, char* buf, int count) {
 			TRACE(("leave ident_readln: select error"))
 			return -1;
 		}
-#endif
 		checktimeouts();
 		
 		/* Have to go one byte at a time, since we don't want to read past
 		 * the end, and have to somehow shove bytes back into the normal
 		 * packet reader */
-//		if (FD_ISSET(fd, &fds)) {
-			num = nbread(fd, &in, 1);
+		if (FD_ISSET(fd, &fds)) {
+			num = read(fd, &in, 1);
 			/* a "\n" is a newline, "\r" we want to read in and keep going
 			 * so that it won't be read as part of the next line */
 			if (num < 0) {
@@ -486,7 +489,7 @@ static int ident_readln(int fd, char* buf, int count) {
 				buf[pos] = in;
 				pos++;
 			}
-		//}
+		}
 	}
 
 	buf[pos] = '\0';

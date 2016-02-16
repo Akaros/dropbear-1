@@ -172,7 +172,7 @@ HERE;
 		 */
 		len = 0;
 	} else {
-		len = nbread(ses.sock_in, buf_getptr(ses.readbuf, maxlen), maxlen);
+		len = read(ses.sock_in, buf_getptr(ses.readbuf, maxlen), maxlen);
 
 		if (len == 0) {
 			ses.remoteclosed();
@@ -223,7 +223,7 @@ static int read_packet_init() {
 	maxlen = blocksize - ses.readbuf->pos;
 			
 	/* read the rest of the packet if possible */
-	slen = nbread(ses.sock_in, buf_getwriteptr(ses.readbuf, maxlen),
+	slen = read(ses.sock_in, buf_getwriteptr(ses.readbuf, maxlen),
 			maxlen);
 	if (slen == 0) {
 		ses.remoteclosed();

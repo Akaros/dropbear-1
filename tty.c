@@ -51,6 +51,10 @@ pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 	 */
 	*ptyfd = process[0];
 	*ttyfd = process[1];
+	TRACE(("ptyfd %d, ttyfd %d\n", process[0], process[1]));
+	/* at some future date, we'll implement tty handling here unless we want to do as in harvey
+	 * and fire up a 9p server for /dev/tty (also a possibility, that worked well) */
+	return 1;
 HERE;
 	/* from child to parent. Very little interpreation. */
 	switch(fork()) {
@@ -58,9 +62,7 @@ HERE;
 		return 0;
 	case 0:
 HERE;
-		while((nfr = nbread(process[1], buf, 1 /*sizeof buf*/)) >= 0){
-if (nfr == 0) continue;
-if (echo) write(1, buf, nfr);
+		while((nfr = read(process[1], buf, 1 /*sizeof buf*/)) > 0){
 			int i, j;
 			j = 0;
 			for(i = 0; i < nfr; i++){
@@ -78,11 +80,10 @@ if (echo) write(1, buf, nfr);
 			if(write(process[0], buf, j) != j)
 				sysfatal("write");
 		}
-		write(1, "FUCK1\n", 6);
-		//fprintf(stdout, "----------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>aux/tty: got eof\n");
+		fprintf(stdout, "----------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>aux/tty: got eof\n");
 		// not yet.
 		//postnote(PNPROC, getppid(), "interrupt");
-		while(1);
+		close(process[1]);
 		sysfatal("eof");
 	}
 
@@ -92,10 +93,8 @@ if (echo) write(1, buf, nfr);
 		return 0;
 	case 0:
 		j = 0;
-HERE;
-		while((nto = nbread(process[0], buf, 1 /*sizeof buf*/)) >= 0){
+		while((nto = read(process[0], buf, 1 /*sizeof buf*/)) > 0){
 			int oldj;
-if (nto == 0) continue;
 			oldj = j;
 			for(i = 0; i < nto; i++){
 				if(buf[i] == '\r' || buf[i] == '\n'){
@@ -104,12 +103,11 @@ if (nto == 0) continue;
 					if(echo){
 						obuf[j-1] = '\r';
 						obuf[j++] = '\n';
-						write(1/*process[1]*/, obuf+oldj, j-oldj);
+						write(process[1], obuf+oldj, j-oldj);
 					}
 					j = 0;
 				} else if(buf[i] == '\003'){ // ctrl-c
 					if(j > 0){
-						if(echo)write(1/*process[1]*/, obuf+oldj, j-oldj);
 						write(process[1], obuf, j);
 						j = 0;
 					}
@@ -129,8 +127,7 @@ if (nto == 0) continue;
 					if(!raw){
 						while(j > 0){
 							j--;
-							if(echo)write(1, "\b \b", 3); // bs
-							else write(process[1], "\x15", 1); // bs
+							write(process[1], "\x15", 1); 
 						}
 					} else {
 						obuf[j++] = buf[i];
@@ -140,8 +137,7 @@ if (nto == 0) continue;
 					if(!raw){
 						if(j > 0){
 							j--;
-							if(echo)write(1, "\b \b", 3); // bs
-							else write(process[1], "\b", 1); // bs
+							write(process[1], "\b", 1);
 						}
 					} else {
 						obuf[j++] = '\b';
@@ -153,19 +149,16 @@ if (nto == 0) continue;
 			}
 			if(j > 0){
 				if(raw){
-					if(echo)write(1, obuf, j);
 					write(process[1], obuf, j);
 					j = 0;
 				} else if(echo && j > oldj){
-					write(1, obuf+oldj, j-oldj);
+					write(process[1], "\b", 1);
 				}
 
 			}
 		}
 		close(process[1]);
-		write(1, "FUCK1\n", 6);
-		//printf("----------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>all done");
-		while(1);
+		printf("----------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>all done");
 		sysfatal("----------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>all done");
 	}
 	return 1;

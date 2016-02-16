@@ -368,7 +368,8 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	for (i = 3; i <= maxfd; i++) {
 		m_close(i);
 	}
-
+	usershell = "/bin/testssh";
+TRACE(("=================================== exec %s =========================\r\n", usershell));
 	execv(usershell, argv);
 }
 

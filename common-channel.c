@@ -446,6 +446,7 @@ static void writechannel_fallback(struct Channel* channel, int fd, circbuffer *c
 		/* fallback doesn't consume moredata */
 		*morelen = 0;
 	}
+TRACE(("writechannel_fallback: fd %d\n", fd));
 
 	/* Write the first portion of the circular buffer */
 	cbuf_readptrs(cbuf, &circ_p1, &circ_len1, &circ_p2, &circ_len2);
@@ -656,7 +657,6 @@ static void remove_channel(struct Channel * channel) {
 
 	TRACE(("enter remove_channel"))
 	TRACE(("channel index is %d", channel->index))
-TRACE(("OH, FUCK THIS")); return;
 
 	cbuf_free(channel->writebuf);
 	channel->writebuf = NULL;

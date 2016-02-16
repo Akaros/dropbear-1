@@ -275,11 +275,15 @@ login_init_entry(struct logininfo *li, int pid, const char *username,
 
 	if (username) {
 		strlcpy(li->username, username, sizeof(li->username));
+		li->uid = 0;
+#if 1
+#else
 		pw = getpwnam(li->username);
 		if (pw == NULL)
 			dropbear_exit("%s %d: login_init_entry: Cannot find user \"%s\"",
 				      __FILE__, __LINE__, li->username);
 		li->uid = pw->pw_uid;
+#endif
 	}
 
 	if (hostname)

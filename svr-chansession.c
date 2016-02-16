@@ -105,7 +105,7 @@ HERE;
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 HERE;
-		TRACE(("sigchld handler: pid %d", pid))
+		TRACE(("sigchld handler: pid %d has EXITED", pid))
 
 		exit = NULL;
 		/* find the corresponding chansess */
@@ -147,6 +147,7 @@ HERE;
 			about an error so should just ignore it */
 			if (write(ses.signal_pipe[1], &ses.isserver, 1) == 1
 					|| errno != EINTR) {
+TRACE(("wake up main select loop, meaning a child has exited, we don't know why"));
 				break;
 			}
 HERE;
@@ -784,6 +785,7 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 #endif
 
 	TRACE(("enter ptycommand"))
+	TRACE(("------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>enter ptycommand"))
 
 	/* we need to have a pty allocated */
 	if (chansess->master == -1 || chansess->tty == NULL) {
@@ -803,17 +805,20 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		/* child */
 		
 		TRACE(("back to normal sigchld"))
-{ char c; while (read(chansess->slave, &c, 1)  > 0) { if (write(chansess->slave, &c, 1) < 1) {} }}
+//{ char c; while (read(chansess->slave, &c, 1)  > 0) { if (write(chansess->slave, &c, 1) < 1) {} }}
 		/* Revert to normal sigchld handling */
 		if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
 			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 		}
 		
+HERE;
 		/* redirect stdin/stdout/stderr */
 		close(chansess->master);
 
+HERE;
 		pty_make_controlling_tty(&chansess->slave, chansess->tty);
 		
+HERE;
 		if ((dup2(chansess->slave, STDIN_FILENO) < 0) ||
 			(dup2(chansess->slave, STDERR_FILENO) < 0) ||
 			(dup2(chansess->slave, STDOUT_FILENO) < 0)) {
@@ -821,13 +826,19 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 			return DROPBEAR_FAILURE;
 		}
 
+HERE;
 		close(chansess->slave);
+fprintf(stderr, "Oh hey. This is dropbear ssh, just  letting you know we're here and we love you\r\n");
+HERE;
 
 		/* write the utmp/wtmp login record - must be after changing the
 		 * terminal used for stdout with the dup2 above */
 		li = chansess_login_alloc(chansess);
+HERE;
 		login_login(li);
+HERE;
 		login_free_entry(li);
+HERE;
 
 #ifdef DO_MOTD
 		if (svr_opts.domotd && !chansess->cmd) {
@@ -856,8 +867,11 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 			m_free(hushpath);
 		}
 #endif /* DO_MOTD */
+fprintf(stderr, "Oh hey. This is dropbear ssh, let's run the child.\r\n");
 
+HERE;
 		execchild(chansess);
+HERE;
 		/* not reached */
 
 	} else {
@@ -871,12 +885,14 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		close(chansess->slave);
 		channel->writefd = chansess->master;
 		channel->readfd = chansess->master;
+write(channel->writefd, "ls\n", 3);
 		/* don't need to set stderr here */
 		ses.maxfd = MAX(ses.maxfd, chansess->master);
 
 		setnonblocking(chansess->master);
 
 	}
+HERE;
 
 	TRACE(("leave ptycommand"))
 	return DROPBEAR_SUCCESS;
@@ -935,6 +951,8 @@ static void execchild(void *user_data) {
 #endif /* HAVE_CLEARENV */
 #endif /* DEBUG_VALGRIND */
 
+#if 1
+#else
 	/* We can only change uid/gid as root ... */
 	if (getuid() == 0) {
 
@@ -958,7 +976,7 @@ static void execchild(void *user_data) {
 			dropbear_exit("%s %d: Couldn't	change user as non-root", __FILE__, __LINE__);
 		}
 	}
-
+#endif
 	/* set env vars */
 	addnewvar("USER", ses.authstate.pw_name);
 	addnewvar("LOGNAME", ses.authstate.pw_name);
