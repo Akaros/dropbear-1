@@ -50,7 +50,7 @@ int sessinitdone = 0; /* GLOBAL */
 /* this is set when we get SIGINT or SIGTERM, the handler is in main.c */
 int exitflag = 0; /* GLOBAL */
 
-#if 0
+#if 1
 int nbread(int fd, void *va, int n)
 {
 	static struct stat buf[8];
@@ -252,7 +252,7 @@ HERE;
 			static char x[4096];
 	
 				dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
-				while (read(ses.signal_pipe[0], x, sizeof(x)) > 0);
+				while (nbread(ses.signal_pipe[0], x, sizeof(x)) > 0);
 HERE;
 		}
 
@@ -391,6 +391,7 @@ static void read_session_identification() {
 	char done = 0;
 	int i;
 	/* If they send more than 50 lines, something is wrong */
+	TRACE(("%s: read from %d\n", __func__, ses.sock_in));
 	for (i = 0; i < 50; i++) {
 		len = ident_readln(ses.sock_in, linebuf, sizeof(linebuf));
 
@@ -460,11 +461,13 @@ static int ident_readln(int fd, char* buf, int count) {
 		}
 		checktimeouts();
 		
+TRACE(("ident_readln: read from %d\n", fd));
 		/* Have to go one byte at a time, since we don't want to read past
 		 * the end, and have to somehow shove bytes back into the normal
 		 * packet reader */
 		if (FD_ISSET(fd, &fds)) {
 			num = read(fd, &in, 1);
+TRACE(("ident_readln: num %d, in %c\n", num, in));
 			/* a "\n" is a newline, "\r" we want to read in and keep going
 			 * so that it won't be read as part of the next line */
 			if (num < 0) {
@@ -472,6 +475,7 @@ static int ident_readln(int fd, char* buf, int count) {
 				if (errno == EINTR) {
 					continue; /* not a real error */
 				}
+				perror("ident_readln");
 				TRACE(("leave ident_readln: read error"))
 				return -1;
 			}
