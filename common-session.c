@@ -60,12 +60,17 @@ int nbread(int fd, void *va, int n)
 		dropbear_log(LOG_WARNING, "stat fd %d: %r\n", fd);
 		return -1;
 	}
+
+	if (buf[0].st_size == 0) {
+		errno = EINTR;
+	} else {
 //dropbear_log(LOG_WARNING, "nbread: fd %d has %ld \n", fd, buf[0].st_size);
-	if (buf[0].st_size > 0) {
-		if (n > buf[0].st_size)
-			n = buf[0].st_size;
-//dropbear_log(LOG_WARNING, "nbread: try for %d\n", n);
-		amt = read(fd, va, n);
+		if (buf[0].st_size > 0) {
+			if (n > buf[0].st_size)
+				n = buf[0].st_size;
+	//dropbear_log(LOG_WARNING, "nbread: try for %d\n", n);
+			amt = read(fd, va, n);
+		}
 	}
 
 	if (amt < 0)
@@ -450,8 +455,9 @@ static int ident_readln(int fd, char* buf, int count) {
 	while (pos < count-1) {
 		FD_SET(fd, &fds);
 
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 10000;
+
 		if (select(fd+1, &fds, NULL, NULL, &timeout) < 0) {
 			if (errno == EINTR) {
 				continue;

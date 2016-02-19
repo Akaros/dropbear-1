@@ -227,7 +227,7 @@ HERE;
 
 		/* read data and send it over the wire */
 		if (channel->readfd >= 0 && FD_ISSET(channel->readfd, readfds)) {
-			TRACE(("send normal readfd"))
+			TRACE(("send normal readfd %d", channel->readfd))
 			send_msg_channel_data(channel, 0);
 			do_check_close = 1;
 		}
@@ -235,7 +235,7 @@ HERE;
 		/* read stderr data and send it over the wire */
 		if (ERRFD_IS_READ(channel) && channel->errfd >= 0 
 			&& FD_ISSET(channel->errfd, readfds)) {
-				TRACE(("send normal errfd"))
+				TRACE(("send normal errfd %d", channel->errfd))
 				send_msg_channel_data(channel, 1);
 			do_check_close = 1;
 		}
@@ -774,10 +774,11 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	buf_putint(ses.writepayload, 0);
 
 	/* read the data */
-	len = read(fd, buf_getwriteptr(ses.writepayload, maxlen), maxlen);
+	len = nbread(fd, buf_getwriteptr(ses.writepayload, maxlen), maxlen);
 
 	if (len <= 0) {
-		if (len == 0 || errno != EINTR) {
+		if (len == 0 && errno != EINTR) {
+TRACE(("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EOF ON %d, len %d, errno %d closing\n", fd, len, errno));
 			/* This will also get hit in the case of EAGAIN. The only
 			time we expect to receive EAGAIN is when we're flushing a FD,
 			in which case it can be treated the same as EOF */

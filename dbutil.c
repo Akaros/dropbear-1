@@ -338,6 +338,8 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	char * baseshell = NULL;
 	unsigned int i;
 
+static char crap[128];
+int amt;
 	baseshell = basename(usershell);
 
 	if (cmd != NULL) {
@@ -365,11 +367,18 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 
 	/* close file descriptors except stdin/stdout/stderr
 	 * Need to be sure FDs are closed here to avoid reading files as root */
+	if (0)
 	for (i = 3; i <= maxfd; i++) {
 		m_close(i);
 	}
 	//usershell = "/bin/testssh";
+TRACE(("type a line\n"));
+amt = read(0, crap, sizeof(crap));
+TRACE(("Got %d bytes\n", amt));
+amt = write(1, crap, amt);
+TRACE(("wrote %d bytes\n", amt));
 TRACE(("=================================== exec %s =========================\r\n", usershell));
+for(i = 0; argv[i]; i++) TRACE(("arg %d: %s\n", i, argv[i]));
 	execv(usershell, argv);
 }
 
@@ -507,6 +516,7 @@ out:
 /* make sure that the socket closes */
 void m_close(int fd) {
 	int val;
+TRACE((")))))))))))))))))))0 close %d\n", fd));
 
 	if (fd == -1) {
 		return;

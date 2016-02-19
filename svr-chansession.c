@@ -885,7 +885,7 @@ HERE;
 		close(chansess->slave);
 		channel->writefd = chansess->master;
 		channel->readfd = chansess->master;
-write(channel->writefd, "ls\n", 3);
+//write(channel->writefd, "ls\n", 3);
 		/* don't need to set stderr here */
 		ses.maxfd = MAX(ses.maxfd, chansess->master);
 
