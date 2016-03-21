@@ -41,7 +41,7 @@ static char* get_response(char* prompt)
 
 	fprintf(stderr, "%s", prompt);
 
-	dropbear_log(LOG_WARNING, "OPENING THE TTY\n");
+	TRACE((LOG_WARNING, "OPENING THE TTY\n"));
 
 	tty = fopen(_PATH_TTY, "r");
 	if (tty) {
