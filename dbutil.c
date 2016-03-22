@@ -365,7 +365,6 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 
 	/* close file descriptors except stdin/stdout/stderr
 	 * Need to be sure FDs are closed here to avoid reading files as root */
-	if (0)
 	for (i = 3; i <= maxfd; i++) {
 		m_close(i);
 	}

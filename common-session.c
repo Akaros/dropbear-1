@@ -478,7 +478,7 @@ static int ident_readln(int fd, char* buf, int count) {
 			 * so that it won't be read as part of the next line */
 			if (num < 0) {
 				/* error */
-				if (errno == EINTR) {
+				if ((errno == EINTR) || (errno == EAGAIN)) {
 					continue; /* not a real error */
 				}
 				perror("ident_readln");
