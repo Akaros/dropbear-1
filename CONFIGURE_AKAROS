@@ -5,6 +5,9 @@
 
 KFS=${AKAROS_ROOT}/kern/kfs/
 XCC=${AKAROS_XCC_ROOT}/bin/x86_64-ucb-akaros-gcc
+AKAROS_CFLAGS="-fno-omit-frame-pointer -g"
+AKAROS_LDFLAGS=""
+AKAROS_LIBS="-liplib"
 
 function bootstrap()
 {
@@ -14,8 +17,10 @@ function bootstrap()
 function configure()
 {
 	rm -rf build; mkdir build; cd build
-	CC=${XCC} ../configure \
+	CC=${XCC} CFLAGS=${AKAROS_CFLAGS} LDFLAGS=${AKAROS_LDFLAGS} \
+	LIBS=$AKAROS_LIBS ../configure \
 	  --prefix=${KFS} \
+	  --sbindir=${KFS}/bin \
 	  --host=$(basename ${XCC%-gcc}) \
 	  --disable-zlib \
 	  --disable-openpty \

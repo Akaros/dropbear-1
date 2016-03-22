@@ -3,3 +3,4 @@ config.h.in
 configure
 build/
 *.o
+*.swp
