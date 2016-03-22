@@ -372,11 +372,6 @@ int amt;
 		m_close(i);
 	}
 	//usershell = "/bin/testssh";
-TRACE(("type a line\n"));
-amt = read(0, crap, sizeof(crap));
-TRACE(("Got %d bytes\n", amt));
-amt = write(1, crap, amt);
-TRACE(("wrote %d bytes\n", amt));
 TRACE(("=================================== exec %s =========================\r\n", usershell));
 for(i = 0; argv[i]; i++) TRACE(("arg %d: %s\n", i, argv[i]));
 	execv(usershell, argv);
