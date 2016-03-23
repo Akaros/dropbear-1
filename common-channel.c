@@ -42,7 +42,6 @@ static void send_msg_channel_open_failure(unsigned int remotechan, int reason,
 static void send_msg_channel_open_confirmation(struct Channel* channel,
 		unsigned int recvwindow,
 		unsigned int recvmaxpacket);
-static int smcd(struct Channel *channel, int isextended, void *data, int datalen);
 static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 	const unsigned char *moredata, unsigned int *morelen);
 static void program_stdin(struct Channel* channel, int fd, circbuffer *cbuf,
@@ -59,7 +58,6 @@ static void close_chan_fd(struct Channel *channel, int fd, int how);
 
 static int log =  -1;
 static int raw = 1;
-static int echo = 1; // the shells don't seem to echo. That's odd.
 
 #define FD_UNINIT (-2)
 #define FD_CLOSED (-1)
@@ -253,7 +251,7 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		/* write to program/pipe stdin */
 		if (channel->writefd >= 0 && FD_ISSET(channel->writefd, writefds)) {
 			TRACE(("send normal program/pipe stdin %d", channel->errfd))
-			program_stdin(channel, channel->writefd, channel->writebuf, NULL, NULL);
+			writechannel(channel, channel->writefd, channel->writebuf, NULL, NULL);
 			do_check_close = 1;
 		}
 
@@ -261,7 +259,7 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		if (ERRFD_IS_WRITE(channel)
 				&& channel->errfd >= 0 && FD_ISSET(channel->errfd, writefds)) {
 			TRACE(("send client stderr? WTF? %d", channel->errfd))
-			program_stdin(channel, channel->errfd, channel->extrabuf, NULL, NULL);
+			writechannel(channel, channel->errfd, channel->extrabuf, NULL, NULL);
 			do_check_close = 1;
 		}
 
@@ -444,113 +442,6 @@ static void send_msg_channel_eof(struct Channel *channel) {
 	channel->sent_eof = 1;
 
 	TRACE(("leave send_msg_channel_eof"))
-}
-
-static void program_stdin(struct Channel* channel, int fd, circbuffer *cbuf,
-	const unsigned char *UNUSED(moredata), unsigned int *morelen) {
-
-	// For now, raw is 1. Always. Because that's how shells Do It.
-	// Cooked mode is so ARS 33.
-	unsigned char *circ_p1, *circ_p2;
-	unsigned int circ_len1, circ_len2;
-	// Sometimes we have a character hanging and need to save it. Sucks.
-	static char *obuf = NULL;
-	static char *buf = NULL;
-	static unsigned int obuflen = 0;
-	int nto, j, i;
-
-	if (morelen) {
-		/* fallback doesn't consume moredata */
-		*morelen = 0;
-	}
-//TRACE(("stdin: fd %d\n", fd));
-
-	/* Write the first portion of the circular buffer */
-	cbuf_readptrs(cbuf, &circ_p1, &circ_len1, &circ_p2, &circ_len2);
-
-	if (circ_len1 > obuflen) {
-		obuf = malloc(circ_len1);
-		buf = malloc(circ_len1);
-		obuflen = circ_len1;
-	}
-
-	j = 0;
-	/* this is very inefficient, but it's hard to fuck up. */
-
-
-	nto = circ_len1;
-	while(circ_len1 > 0) {
-		nto = 1;
-		buf[i] = *circ_p1++;
-		circ_len1--;
-		cbuf_incrread(cbuf, 1);
-		channel->recvdonelen += 1;
-		int oldj;
-		oldj = j;
-		for(i = 0; i < nto; i++){
-			if(buf[i] == '\r' || buf[i] == '\n'){
-				obuf[j++] = '\n';
-				write(fd, obuf, j);
-				if(echo){
-					obuf[j-1] = '\r';
-					obuf[j++] = '\n';
-					smcd(channel, 0, obuf+oldj, j-oldj);
-				}
-				j = 0;
-			} else if(buf[i] == '\003'){ // ctrl-c
-				if(j > 0){
-					write(fd, obuf, j);
-					j = 0;
-				}
-				fprintf(stdout, "aux/tty: NOT sent interrupt to %d\n", -1); //pid);
-				//			postnote(PNGROUP, pid, "interrupt");
-				continue;
-			} else if(buf[i] == '\004'){ // ctrl-d
-				if(j > 0){
-					if(echo){
-						printf("ECHO: ");
-						smcd(channel, 0, obuf+oldj, j-oldj);
-					}
-					write(fd, obuf, j);
-					j = 0;
-				}
-				fprintf(stdout, "aux/tty: NOT sent eof to %d\n", -1); //, pid);
-				write(fd, obuf, 0); //eof
-				continue;
-			} else if(buf[i] == 0x15){ // ctrl-u
-				if(!raw){
-					while(j > 0){
-						j--;
-						write(fd, "\x15", 1);
-					}
-				} else {
-					obuf[j++] = buf[i];
-				}
-				continue;
-			} else if(buf[i] == 0x7f || buf[i] == '\b'){ // backspace
-				if(!raw){
-					if(j > 0){
-						j--;
-						write(fd, "\b", 1);
-					}
-				} else {
-					obuf[j++] = '\b';
-				}
-				continue;
-			} else {
-				obuf[j++] = buf[i];
-			}
-		}
-		if(j > 0){
-			if(raw){
-				write(fd, obuf, j);
-				j = 0;
-			} else if(echo && j > oldj){
-				smcd(channel, 0, "\b", 1);
-			}
-
-		}
-	}
 }
 
 #ifndef HAVE_WRITEV
@@ -956,97 +847,6 @@ TRACE(("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EOF ON %d, len %d, errno %d cl
 	TRACE(("leave send_msg_channel_data"))
 }
 
-/* send some data. */
-static int smcd(struct Channel *channel, int isextended, void *data, int datalen) {
-	int len, readlen;
-	size_t maxlen, size_pos;
-	int fd;
-	char *out, *buf = data;
-	int outlen = 0;
-	int i;
-	int nbread(int fd, void *va, int n);
-
-	if (datalen < 1) {
-		return 0;
-	}
-	CHECKCLEARTOWRITE();
-
-	TRACE(("enter send_msg_channel_data"))
-	dropbear_assert(!channel->sent_close);
-
-	if (isextended) {
-		fd = channel->errfd;
-	} else {
-		fd = channel->readfd;
-	}
-	TRACE(("enter send_msg_channel_data isextended %d fd %d", isextended, fd))
-	dropbear_assert(fd >= 0);
-
-	maxlen = MIN(channel->transwindow, channel->transmaxpacket);
-	/* -(1+4+4) is SSH_MSG_CHANNEL_DATA, channel number, string length, and
-	 * exttype if is extended */
-	maxlen = MIN(maxlen,
-		     ses.writepayload->size - 1 - 4 - 4 - (isextended ? 4 : 0));
-	TRACE(("maxlen %zd", maxlen));
-	if (maxlen < 2){
-		TRACE(("leave send_msg_channel_data: no window"));
-		return 0;
-	}
-
-	buf_putbyte(ses.writepayload,
-			isextended ? SSH_MSG_CHANNEL_EXTENDED_DATA : SSH_MSG_CHANNEL_DATA);
-	buf_putint(ses.writepayload, channel->remotechan);
-	if (isextended) {
-		buf_putint(ses.writepayload, SSH_EXTENDED_DATA_STDERR);
-	}
-	/* a dummy size first ...*/
-	size_pos = ses.writepayload->pos;
-	buf_putint(ses.writepayload, 0);
-
-	readlen = isextended ? maxlen : maxlen/2;
-	if (readlen > datalen)
-		readlen = datalen;
-	len = readlen;
-	out = buf_getwriteptr(ses.writepayload, maxlen);
-	for(i = 0; i < len; i++, out++, outlen++) {
-		if (isextended) {
-			*out = buf[i];
-			continue;
-		}
-		if ((buf[i] == '\n') || (buf[i] == '\r')) {
-			*out = '\n';
-			out++, outlen++;
-			*out = '\r';
-		} else {
-			*out = buf[i];
-		}
-	}
-	len = outlen;
-
-	if (channel->read_mangler) {
-		channel->read_mangler(channel, buf_getwriteptr(ses.writepayload, len), &len);
-		if (len == 0) {
-			buf_setpos(ses.writepayload, 0);
-			buf_setlen(ses.writepayload, 0);
-			return 0;
-		}
-	}
-
-	TRACE(("send_msg_channel_data: len %d fd %d", len, fd))
-	buf_incrwritepos(ses.writepayload, len);
-	/* ... real size here */
-	buf_setpos(ses.writepayload, size_pos);
-	buf_putint(ses.writepayload, len);
-
-	channel->transwindow -= len;
-
-	encrypt_packet();
-
-	TRACE(("leave send_msg_channel_data_data"));
-	return readlen;
-
-}
-
 /* We receive channel data */
 void recv_msg_channel_data() {
 
@@ -1120,7 +920,6 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 			if (v[i] == '\r') v[i] = '\n';
 		consumed = MIN(maxecholen, consumed);
 		writechannel(channel, fd, cbuf, v, &consumed);
-		smcd(channel, 0, v, consumed);
 		datalen -= consumed;
 		buf_incrpos(ses.payload, consumed);
 	}
