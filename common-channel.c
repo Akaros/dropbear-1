@@ -58,6 +58,9 @@ static void check_close(struct Channel *channel);
 static void close_chan_fd(struct Channel *channel, int fd, int how);
 
 static int log =  -1;
+static int raw = 1;
+static int echo = 1; // the shells don't seem to echo. That's odd.
+
 #define FD_UNINIT (-2)
 #define FD_CLOSED (-1)
 
@@ -216,7 +219,6 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 
 	if (log < 0) {
 		log = open("/tmp/log", O_CREAT|O_RDWR, 0666);
-		write(log, "HI\n", 3);
 	}
 	/* Listeners such as TCP, X11, agent-auth */
 	struct Channel *channel;
@@ -249,10 +251,8 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		}
 
 		/* write to program/pipe stdin */
-		write(log, "!", 1);
 		if (channel->writefd >= 0 && FD_ISSET(channel->writefd, writefds)) {
 			TRACE(("send normal program/pipe stdin %d", channel->errfd))
-			write(log, "@", 1);
 			program_stdin(channel, channel->writefd, channel->writebuf, NULL, NULL);
 			do_check_close = 1;
 		}
@@ -261,7 +261,6 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		if (ERRFD_IS_WRITE(channel)
 				&& channel->errfd >= 0 && FD_ISSET(channel->errfd, writefds)) {
 			TRACE(("send client stderr? WTF? %d", channel->errfd))
-			write(log, "$", 1);
 			program_stdin(channel, channel->errfd, channel->extrabuf, NULL, NULL);
 			do_check_close = 1;
 		}
@@ -452,8 +451,6 @@ static void program_stdin(struct Channel* channel, int fd, circbuffer *cbuf,
 
 	// For now, raw is 1. Always. Because that's how shells Do It.
 	// Cooked mode is so ARS 33.
-	static int raw = 1;
-	static int echo = 1; // the shells don't seem to echo. That's odd.
 	unsigned char *circ_p1, *circ_p2;
 	unsigned int circ_len1, circ_len2;
 	// Sometimes we have a character hanging and need to save it. Sucks.
@@ -854,6 +851,7 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	static char *buf;
 	static size_t buflen = 0;
 	char *out;
+	int outlen = 0;
 	int i;
 	int nbread(int fd, void *va, int n);
 	int shortread;
@@ -903,17 +901,16 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	len = nbread(fd, buf, readlen);
 	shortread = len < readlen;
 	out = buf_getwriteptr(ses.writepayload, maxlen);
-	for(i = 0; i < len; i++) {
+	for(i = 0; i < len; i++, outlen++, out++) {
 		*out = buf[i];
 		if (isextended)
 			continue;
 		if (*out == '\n') {
-			out++;
+			out++, outlen++;
 			*out = '\r';
 		}
-		out++;
 	}
-	len = i;
+	len = outlen;
 
 	if (len <= 0) {
 		if (len == 0 && errno != EINTR) {
@@ -965,14 +962,11 @@ static int smcd(struct Channel *channel, int isextended, void *data, int datalen
 	size_t maxlen, size_pos;
 	int fd;
 	char *out, *buf = data;
+	int outlen = 0;
 	int i;
 	int nbread(int fd, void *va, int n);
 
-	write(log, ".", 1);
-	write(log, data, datalen);
-
 	if (datalen < 1) {
-		write(log, "#", 1);
 		return 0;
 	}
 	CHECKCLEARTOWRITE();
@@ -1014,17 +1008,20 @@ static int smcd(struct Channel *channel, int isextended, void *data, int datalen
 		readlen = datalen;
 	len = readlen;
 	out = buf_getwriteptr(ses.writepayload, maxlen);
-	for(i = 0; i < len; i++) {
-		*out = buf[i];
-		if (isextended)
+	for(i = 0; i < len; i++, out++, outlen++) {
+		if (isextended) {
+			*out = buf[i];
 			continue;
-		if (*out == '\n') {
-			out++;
-			*out = '\r';
 		}
-		out++;
+		if ((buf[i] == '\n') || (buf[i] == '\r')) {
+			*out = '\n';
+			out++, outlen++;
+			*out = '\r';
+		} else {
+			*out = buf[i];
+		}
 	}
-	len = i;
+	len = outlen;
 
 	if (channel->read_mangler) {
 		channel->read_mangler(channel, buf_getwriteptr(ses.writepayload, len), &len);
@@ -1067,9 +1064,11 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 
 	unsigned int datalen;
 	unsigned int maxdata;
+	unsigned int maxecholen;
 	unsigned int buflen;
 	unsigned int len;
 	unsigned int consumed;
+	int isextended = 0; // we might need this at some point. I can't see why.
 
 	TRACE(("enter recv_msg_channel_data"))
 
@@ -1102,13 +1101,29 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 
 	/* Attempt to write the data immediately without having to put it in the circular buffer */
 	consumed = datalen;
-	write(log, "^", 1);
-	write(log, buf_getptr(ses.payload, datalen), consumed);
-	smcd(channel, 0, buf_getptr(ses.payload, datalen), consumed);
-	writechannel(channel, fd, cbuf, buf_getptr(ses.payload, datalen), &consumed);
+	/* the amount we can eat depends on how much we can echo. */
+	maxecholen = MIN(channel->transwindow, channel->transmaxpacket);
+	/* -(1+4+4) is SSH_MSG_CHANNEL_DATA, channel number, string length, and
+	 * exttype if is extended */
+	maxecholen = MIN(maxecholen,
+		     ses.writepayload->size - 1 - 4 - 4 - (isextended ? 4 : 0));
 
-	datalen -= consumed;
-	buf_incrpos(ses.payload, consumed);
+	// and due to cr/lf expansion, it's half that.
+	// TODO: write a function to return the expanded string, and use that
+	// instead of this stupid metric.
+	TRACE(("MAX echo lenn for %d bytes is %d and then divided by 2\n", consumed, maxecholen));
+	maxecholen /= 2;
+	if (maxecholen > 1){
+		char *v = buf_getptr(ses.payload, datalen);
+		int i;
+		for(i = 0; i < datalen; i++)
+			if (v[i] == '\r') v[i] = '\n';
+		consumed = MIN(maxecholen, consumed);
+		writechannel(channel, fd, cbuf, v, &consumed);
+		smcd(channel, 0, v, consumed);
+		datalen -= consumed;
+		buf_incrpos(ses.payload, consumed);
+	}
 
 
 	/* We may have to run throught twice, if the buffer wraps around. Can't

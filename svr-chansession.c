@@ -876,7 +876,7 @@ HERE;
 
 	} else {
 		/* parent */
-debug_trace = 1;
+//debug_trace = 1;
 		TRACE(("continue ptycommand: parent"))
 		chansess->pid = pid;
 

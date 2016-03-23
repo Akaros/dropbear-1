@@ -141,11 +141,12 @@ void buf_incrwritepos(buffer* buf, unsigned int incr) {
 /* increment the position by incr, negative values are allowed, to
  * decrement the pos*/
 void buf_incrpos(buffer* buf,  int incr) {
-	if (incr > BUF_MAX_INCR ||
-			(unsigned int)((int)buf->pos + incr) > buf->len 
-			|| ((int)buf->pos + incr) < 0) {
-		dropbear_exit("%s %d: Bad buf_incrpos", __FILE__, __LINE__);
-	}
+	if (incr > BUF_MAX_INCR)
+		dropbear_exit("%s %d: Bad buf_incrpos: %d is greater than BUF_MAX_INCR %d", __FILE__, __LINE__, incr, BUF_MAX_INCR);
+	if ((unsigned int)((int)buf->pos + incr) > buf->len)
+		dropbear_exit("%s %d: Bad buf_incrpos: incr %d but buf->len is %d", __FILE__, __LINE__, incr, buf->len);
+	if (((int)buf->pos + incr) < 0)
+		dropbear_exit("%s %d: Bad buf_incrpos: buf->pos is %p, incr is %d, result is < 0", __FILE__, __LINE__, (void *)((int)buf->pos + incr), incr);
 	buf->pos += incr;
 }
 
