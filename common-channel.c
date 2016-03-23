@@ -42,6 +42,7 @@ static void send_msg_channel_open_failure(unsigned int remotechan, int reason,
 static void send_msg_channel_open_confirmation(struct Channel* channel,
 		unsigned int recvwindow,
 		unsigned int recvmaxpacket);
+static int smcd(struct Channel *channel, int isextended, void *data, int datalen);
 static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 	const unsigned char *moredata, unsigned int *morelen);
 static void program_stdin(struct Channel* channel, int fd, circbuffer *cbuf,
@@ -56,6 +57,7 @@ static unsigned int write_pending(struct Channel * channel);
 static void check_close(struct Channel *channel);
 static void close_chan_fd(struct Channel *channel, int fd, int how);
 
+static int log =  -1;
 #define FD_UNINIT (-2)
 #define FD_CLOSED (-1)
 
@@ -212,6 +214,10 @@ struct Channel* getchannel() {
 /* Iterate through the channels, performing IO if available */
 void channelio(fd_set *readfds, fd_set *writefds) {
 
+	if (log < 0) {
+		log = open("/tmp/log", O_CREAT|O_RDWR, 0666);
+		write(log, "HI\n", 3);
+	}
 	/* Listeners such as TCP, X11, agent-auth */
 	struct Channel *channel;
 	unsigned int i;
@@ -243,7 +249,10 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		}
 
 		/* write to program/pipe stdin */
+		write(log, "!", 1);
 		if (channel->writefd >= 0 && FD_ISSET(channel->writefd, writefds)) {
+			TRACE(("send normal program/pipe stdin %d", channel->errfd))
+			write(log, "@", 1);
 			program_stdin(channel, channel->writefd, channel->writebuf, NULL, NULL);
 			do_check_close = 1;
 		}
@@ -251,7 +260,9 @@ void channelio(fd_set *readfds, fd_set *writefds) {
 		/* stderr for client mode */
 		if (ERRFD_IS_WRITE(channel)
 				&& channel->errfd >= 0 && FD_ISSET(channel->errfd, writefds)) {
-			writechannel(channel, channel->errfd, channel->extrabuf, NULL, NULL);
+			TRACE(("send client stderr? WTF? %d", channel->errfd))
+			write(log, "$", 1);
+			program_stdin(channel, channel->errfd, channel->extrabuf, NULL, NULL);
 			do_check_close = 1;
 		}
 
@@ -455,7 +466,7 @@ static void program_stdin(struct Channel* channel, int fd, circbuffer *cbuf,
 		/* fallback doesn't consume moredata */
 		*morelen = 0;
 	}
-TRACE(("stdin: fd %d\n", fd));
+//TRACE(("stdin: fd %d\n", fd));
 
 	/* Write the first portion of the circular buffer */
 	cbuf_readptrs(cbuf, &circ_p1, &circ_len1, &circ_p2, &circ_len2);
@@ -486,7 +497,7 @@ TRACE(("stdin: fd %d\n", fd));
 				if(echo){
 					obuf[j-1] = '\r';
 					obuf[j++] = '\n';
-					write(fd, obuf+oldj, j-oldj);
+					smcd(channel, 0, obuf+oldj, j-oldj);
 				}
 				j = 0;
 			} else if(buf[i] == '\003'){ // ctrl-c
@@ -499,7 +510,10 @@ TRACE(("stdin: fd %d\n", fd));
 				continue;
 			} else if(buf[i] == '\004'){ // ctrl-d
 				if(j > 0){
-					if(echo)write(1, obuf+oldj, j-oldj);
+					if(echo){
+						printf("ECHO: ");
+						smcd(channel, 0, obuf+oldj, j-oldj);
+					}
 					write(fd, obuf, j);
 					j = 0;
 				}
@@ -535,7 +549,7 @@ TRACE(("stdin: fd %d\n", fd));
 				write(fd, obuf, j);
 				j = 0;
 			} else if(echo && j > oldj){
-				write(fd, "\b", 1);
+				smcd(channel, 0, "\b", 1);
 			}
 
 		}
@@ -826,6 +840,7 @@ void recv_msg_channel_request() {
 
 }
 
+/* shitty design since this requires you use the fd! */
 /* Reads data from the server's program/shell/etc, and puts it in a
  * channel_data packet to send.
  * chan is the remote channel, isextended is 0 if it is normal data, 1
@@ -833,7 +848,7 @@ void recv_msg_channel_request() {
  * exttype */
 static void send_msg_channel_data(struct Channel *channel, int isextended) {
 
-	int len;
+	int len, readlen;
 	size_t maxlen, size_pos;
 	int fd;
 	static char *buf;
@@ -841,6 +856,7 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	char *out;
 	int i;
 	int nbread(int fd, void *va, int n);
+	int shortread;
 	CHECKCLEARTOWRITE();
 
 	TRACE(("enter send_msg_channel_data"))
@@ -878,13 +894,14 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	// This all kind of assumes maxlen is > 1
 	/* read the data */
 	if (buflen < maxlen) {
-		free(buf);
-		buf = malloc(maxlen);
+		buf = realloc(buf, maxlen);
 		// screw it. If we can't even allocate this buffer we'll
 		// take the segv.
 		buflen = maxlen;
 	}
-	len = nbread(fd, buf, isextended ? maxlen : maxlen/2);
+	readlen = isextended ? maxlen : maxlen/2;
+	len = nbread(fd, buf, readlen);
+	shortread = len < readlen;
 	out = buf_getwriteptr(ses.writepayload, maxlen);
 	for(i = 0; i < len; i++) {
 		*out = buf[i];
@@ -934,12 +951,103 @@ TRACE(("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EOF ON %d, len %d, errno %d cl
 
 	/* If we receive less data than we requested when flushing, we've
 	   reached the equivalent of EOF */
-	if (channel->flushing && len < (ssize_t)maxlen)
+	if (channel->flushing && shortread)
 	{
 		TRACE(("closing from channel, flushing out."))
 		close_chan_fd(channel, fd, SHUT_RD);
 	}
 	TRACE(("leave send_msg_channel_data"))
+}
+
+/* send some data. */
+static int smcd(struct Channel *channel, int isextended, void *data, int datalen) {
+	int len, readlen;
+	size_t maxlen, size_pos;
+	int fd;
+	char *out, *buf = data;
+	int i;
+	int nbread(int fd, void *va, int n);
+
+	write(log, ".", 1);
+	write(log, data, datalen);
+
+	if (datalen < 1) {
+		write(log, "#", 1);
+		return 0;
+	}
+	CHECKCLEARTOWRITE();
+
+	TRACE(("enter send_msg_channel_data"))
+	dropbear_assert(!channel->sent_close);
+
+	if (isextended) {
+		fd = channel->errfd;
+	} else {
+		fd = channel->readfd;
+	}
+	TRACE(("enter send_msg_channel_data isextended %d fd %d", isextended, fd))
+	dropbear_assert(fd >= 0);
+
+	maxlen = MIN(channel->transwindow, channel->transmaxpacket);
+	/* -(1+4+4) is SSH_MSG_CHANNEL_DATA, channel number, string length, and
+	 * exttype if is extended */
+	maxlen = MIN(maxlen,
+		     ses.writepayload->size - 1 - 4 - 4 - (isextended ? 4 : 0));
+	TRACE(("maxlen %zd", maxlen));
+	if (maxlen < 2){
+		TRACE(("leave send_msg_channel_data: no window"));
+		return 0;
+	}
+
+	buf_putbyte(ses.writepayload,
+			isextended ? SSH_MSG_CHANNEL_EXTENDED_DATA : SSH_MSG_CHANNEL_DATA);
+	buf_putint(ses.writepayload, channel->remotechan);
+	if (isextended) {
+		buf_putint(ses.writepayload, SSH_EXTENDED_DATA_STDERR);
+	}
+	/* a dummy size first ...*/
+	size_pos = ses.writepayload->pos;
+	buf_putint(ses.writepayload, 0);
+
+	readlen = isextended ? maxlen : maxlen/2;
+	if (readlen > datalen)
+		readlen = datalen;
+	len = readlen;
+	out = buf_getwriteptr(ses.writepayload, maxlen);
+	for(i = 0; i < len; i++) {
+		*out = buf[i];
+		if (isextended)
+			continue;
+		if (*out == '\n') {
+			out++;
+			*out = '\r';
+		}
+		out++;
+	}
+	len = i;
+
+	if (channel->read_mangler) {
+		channel->read_mangler(channel, buf_getwriteptr(ses.writepayload, len), &len);
+		if (len == 0) {
+			buf_setpos(ses.writepayload, 0);
+			buf_setlen(ses.writepayload, 0);
+			return 0;
+		}
+	}
+
+	TRACE(("send_msg_channel_data: len %d fd %d", len, fd))
+	buf_incrwritepos(ses.writepayload, len);
+	/* ... real size here */
+	buf_setpos(ses.writepayload, size_pos);
+	buf_putint(ses.writepayload, len);
+
+	channel->transwindow -= len;
+
+	encrypt_packet();
+
+	TRACE(("leave send_msg_channel_data_data"));
+	return readlen;
+
 }
 
 /* We receive channel data */
@@ -994,6 +1102,9 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 
 	/* Attempt to write the data immediately without having to put it in the circular buffer */
 	consumed = datalen;
+	write(log, "^", 1);
+	write(log, buf_getptr(ses.payload, datalen), consumed);
+	smcd(channel, 0, buf_getptr(ses.payload, datalen), consumed);
 	writechannel(channel, fd, cbuf, buf_getptr(ses.payload, datalen), &consumed);
 
 	datalen -= consumed;

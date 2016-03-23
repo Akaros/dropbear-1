@@ -185,7 +185,7 @@ void set_connect_fds(fd_set *writefd) {
 		}
 		if (c->sock >= 0) {
 			FD_SET(c->sock, writefd);
-			TRACE(("FD_SET set_connect_fds %d\n", writefd));
+			TRACE(("FD_SET set_connect_fds %d\n", c->sock));
 		} else {
 			/* Final failure */
 			if (!c->errstring) {
@@ -309,7 +309,7 @@ void set_sock_priority(int sock, enum dropbear_prio prio) {
 	int iptos_val = 0;
 #endif
 #ifdef SO_PRIORITY
-	int so_prio_val = 0;
+// XXX 	int so_prio_val = 0;
 #endif
 
 

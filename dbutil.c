@@ -338,8 +338,6 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	char * baseshell = NULL;
 	unsigned int i;
 
-static char crap[128];
-int amt;
 	baseshell = basename(usershell);
 
 	if (cmd != NULL) {

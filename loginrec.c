@@ -263,7 +263,7 @@ int
 login_init_entry(struct logininfo *li, int pid, const char *username,
 		 const char *hostname, const char *line)
 {
-	struct passwd *pw;
+//	struct passwd *pw;
 
 	memset(li, 0, sizeof(*li));
 

@@ -155,14 +155,14 @@ void read_packet() {
 		/* Read the first blocksize of the packet, so we can decrypt it and
 		 * find the length of the whole packet */
 		ret = read_packet_init();
-HERE;
+//HERE;
 		if (ret == DROPBEAR_FAILURE) {
 			/* didn't read enough to determine the length */
 			TRACE2(("leave read_packet: packetinit done"))
 			return;
 		}
 	}
-HERE;
+//HERE;
 	/* Attempt to read the remainder of the packet, note that there
 	 * mightn't be any available (EAGAIN) */
 	maxlen = ses.readbuf->len - ses.readbuf->pos;

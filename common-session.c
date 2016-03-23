@@ -193,17 +193,17 @@ void session_loop(void(*loophandler)()) {
 
 		/* We get woken up when signal handlers write to this pipe.
 		   SIGCHLD in svr-chansession is the only one currently. */
-dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.signal_pipe[0]);
+//dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.signal_pipe[0]);
 		FD_SET(ses.signal_pipe[0], &readfd);
-HERE;
+//HERE;
 
 		/* set up for channels which can be read/written */
 		setchannelfds(&readfd, &writefd, writequeue_has_space);
-HERE;
+//HERE;
 
 		/* Pending connections to test */
 		set_connect_fds(&writefd);
-HERE;
+//HERE;
 
 		/* We delay reading from the input socket during initial setup until
 		after we have written out our initial KEXINIT packet (empty writequeue). 
@@ -214,33 +214,33 @@ HERE;
 		if (ses.sock_in != -1 
 			&& (ses.remoteident || isempty(&ses.writequeue)) 
 			&& writequeue_has_space) {
-dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.sock_in);
+//dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.sock_in);
 			FD_SET(ses.sock_in, &readfd);
 		}
-HERE;
+//HERE;
 
 		/* Ordering is important, this test must occur after any other function
 		might have queued packets (such as connection handlers) */
 		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
-dropbear_log(LOG_WARNING, "main loop, Set %d into writefd\n", ses.sock_in);
+//dropbear_log(LOG_WARNING, "main loop, Set %d into writefd\n", ses.sock_in);
 			FD_SET(ses.sock_out, &writefd);
 		}
-HERE;
+//HERE;
 
-dropbear_log(LOG_WARNING, "select on %d sockets\n", ses.maxfd+1);
+//dropbear_log(LOG_WARNING, "select on %d sockets\n", ses.maxfd+1);
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
-		dropbear_log(LOG_WARNING, "after select in main loop %s %d val %d %r \n", __FILE__, __LINE__, val, "gcc is too smart for its own good");
-HERE;
+//		dropbear_log(LOG_WARNING, "after select in main loop %s %d val %d %r \n", __FILE__, __LINE__, val, "gcc is too smart for its own good");
+//HERE;
 		if (exitflag) {
 			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
 		}
-	HERE;	
+//	HERE;	
 		if (val < 0 && errno != EINTR) {
 			dropbear_exit("%s %d: Error in select", __FILE__, __LINE__);
 		}
-HERE;
+//HERE;
 		if (val <= 0) {
-HERE;
+//HERE;
 			/* If we were interrupted or the select timed out, we still
 			 * want to iterate over channels etc for reading, to handle
 			 * server processes exiting etc. 
@@ -253,28 +253,28 @@ HERE;
 		any thing with the data, since the pipe's purpose is purely to
 		wake up the select() above. */
 		if (FD_ISSET(ses.signal_pipe[0], &readfd)) {
-HERE;
+//HERE;
 			static char x[4096];
 	
-				dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
+				//dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
 				while (nbread(ses.signal_pipe[0], x, sizeof(x)) > 0);
-HERE;
+//HERE;
 		}
 
 		/* check for auth timeout, rekeying required etc */
 		checktimeouts();
-HERE;
-dropbear_log(LOG_WARNING, "ses.sock_in  readfd %d\n", ses.sock_in);
+//HERE;
+//dropbear_log(LOG_WARNING, "ses.sock_in  readfd %d\n", ses.sock_in);
 		/* process session socket's incoming data */
 		if (ses.sock_in != -1) {
 			if (FD_ISSET(ses.sock_in, &readfd)) {
-HERE;
+//HERE;
 				if (!ses.remoteident) {
-HERE;
+//HERE;
 					/* blocking read of the version string */
 					read_session_identification();
 				} else {
-HERE;
+//HERE;
 					read_packet();
 				}
 			}
@@ -282,11 +282,11 @@ HERE;
 			/* Process the decrypted packet. After this, the read buffer
 			 * will be ready for a new packet */
 			if (ses.payload != NULL) {
-HERE;
+//HERE;
 				process_packet();
 			}
 		}
-HERE;
+//HERE;
 		/* if required, flush out any queued reply packets that
 		were being held up during a KEX */
 		maybe_flush_reply_queue();
@@ -299,7 +299,7 @@ HERE;
 
 		/* process session socket's outgoing data */
 		if (ses.sock_out != -1) {
-HERE;
+//HERE;
 			if (!isempty(&ses.writequeue)) {
 				write_packet();
 			}
@@ -309,7 +309,7 @@ HERE;
 		if (loophandler) {
 			loophandler();
 		}
-HERE;
+//HERE;
 
 	} /* for(;;) */
 	
@@ -396,7 +396,7 @@ static void read_session_identification() {
 	char done = 0;
 	int i;
 	/* If they send more than 50 lines, something is wrong */
-	TRACE(("%s: read from %d\n", __func__, ses.sock_in));
+//	TRACE(("%s: read from %d\n", __func__, ses.sock_in));
 	for (i = 0; i < 50; i++) {
 		len = ident_readln(ses.sock_in, linebuf, sizeof(linebuf));
 
@@ -467,13 +467,13 @@ static int ident_readln(int fd, char* buf, int count) {
 		}
 		checktimeouts();
 		
-TRACE(("ident_readln: read from %d\n", fd));
+//TRACE(("ident_readln: read from %d\n", fd));
 		/* Have to go one byte at a time, since we don't want to read past
 		 * the end, and have to somehow shove bytes back into the normal
 		 * packet reader */
 		if (FD_ISSET(fd, &fds)) {
 			num = read(fd, &in, 1);
-TRACE(("ident_readln: num %d, in %c\n", num, in));
+//TRACE(("ident_readln: num %d, in %c\n", num, in));
 			/* a "\n" is a newline, "\r" we want to read in and keep going
 			 * so that it won't be read as part of the next line */
 			if (num < 0) {
