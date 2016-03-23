@@ -98,13 +98,13 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 
 	const int saved_errno = errno;
 
-HERE;
+//HERE;
 	/* Make channel handling code look for closed channels */
 	ses.channel_signal_pending = 1;
 
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-HERE;
+//HERE;
 		TRACE(("sigchld handler: pid %d has EXITED", pid))
 
 		exit = NULL;
@@ -142,7 +142,7 @@ HERE;
 		
 		/* Make sure that the main select() loop wakes up */
 		while (1) {
-HERE;
+//HERE;
 			/* isserver is just a random byte to write. We can't do anything
 			about an error so should just ignore it */
 			if (write(ses.signal_pipe[1], &ses.isserver, 1) == 1
@@ -150,7 +150,7 @@ HERE;
 TRACE(("wake up main select loop, meaning a child has exited, we don't know why"));
 				break;
 			}
-HERE;
+//HERE;
 		}
 	}
 
@@ -571,7 +571,7 @@ static int sessionpty(struct ChanSess * chansess) {
 		TRACE(("leave sessionpty : pty forbidden by public key option"))
 		return DROPBEAR_FAILURE;
 	}
-HERE;
+//HERE;
 
 	chansess->term = buf_getstring(ses.payload, &termlen);
 	if (termlen > MAX_TERM_LEN) {
@@ -580,24 +580,24 @@ HERE;
 		return DROPBEAR_FAILURE;
 	}
 
-HERE;
+//HERE;
 	/* allocate the pty */
 	if (chansess->master != -1) {
 		dropbear_exit("%s %d: Multiple pty requests", __FILE__, __LINE__);
 	}
-HERE;
+//HERE;
 	if (pty_allocate(&chansess->master, &chansess->slave, namebuf, 64) == 0) {
 		TRACE(("leave sessionpty: failed to allocate pty"))
 		return DROPBEAR_FAILURE;
 	}
-HERE;
+//HERE;
 	
 	chansess->tty = m_strdup(namebuf);
-HERE;
+//HERE;
 	if (!chansess->tty) {
 		dropbear_exit("%s %d: Out of memory", __FILE__, __LINE__); /* TODO disconnect */
 	}
-HERE;
+//HERE;
 
 	if (0) {
 	pw = getpwnam(ses.authstate.pw_name);
@@ -606,15 +606,15 @@ HERE;
 		pty_setowner(pw, chansess->tty);
 	}
 		
-HERE;
+//HERE;
 		/* Set up the rows/col counts */
 		sessionwinchange(chansess);
 		
-HERE;
+//HERE;
 		/* Read the terminal modes */
 		get_termmodes(chansess);
 		
-HERE;
+//HERE;
 		TRACE(("leave sessionpty"))
 	return DROPBEAR_SUCCESS;
 }
@@ -811,14 +811,14 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
 		}
 		
-HERE;
+//HERE;
 		/* redirect stdin/stdout/stderr */
 		close(chansess->master);
 
-HERE;
+//HERE;
 		pty_make_controlling_tty(&chansess->slave, chansess->tty);
 		
-HERE;
+//HERE;
 		if ((dup2(chansess->slave, STDIN_FILENO) < 0) ||
 			(dup2(chansess->slave, STDERR_FILENO) < 0) ||
 			(dup2(chansess->slave, STDOUT_FILENO) < 0)) {
@@ -826,19 +826,19 @@ HERE;
 			return DROPBEAR_FAILURE;
 		}
 
-HERE;
+//HERE;
 		close(chansess->slave);
 fprintf(stderr, "Oh hey. This is dropbear ssh, just  letting you know we're here and we love you\r\n");
-HERE;
+//HERE;
 
 		/* write the utmp/wtmp login record - must be after changing the
 		 * terminal used for stdout with the dup2 above */
 		li = chansess_login_alloc(chansess);
-HERE;
+//HERE;
 		login_login(li);
-HERE;
+//HERE;
 		login_free_entry(li);
-HERE;
+//HERE;
 
 #ifdef DO_MOTD
 		if (svr_opts.domotd && !chansess->cmd) {
@@ -869,9 +869,9 @@ HERE;
 #endif /* DO_MOTD */
 fprintf(stderr, "Oh hey. This is dropbear ssh, let's run the child.\r\n");
 
-HERE;
+//HERE;
 		execchild(chansess);
-HERE;
+//HERE;
 		/* not reached */
 
 	} else {
@@ -892,7 +892,7 @@ HERE;
 		setnonblocking(chansess->master);
 
 	}
-HERE;
+//HERE;
 
 	TRACE(("leave ptycommand"))
 	return DROPBEAR_SUCCESS;
