@@ -286,7 +286,20 @@ int okname(char *);
 void run_err(const char *,...);
 void verifydir(char *);
 
+#if 1 // TODO
+struct passwd hack = {
+	.pw_name = "root",
+	.pw_passwd = "x",
+	.pw_uid = 0,
+	.pw_gid = 0,
+	.pw_gecos = "GE Computing",
+	.pw_dir = "/",
+	.pw_shell = "/bin/sh"
+};
+struct passwd *pwd = &hack;
+#else
 struct passwd *pwd;
+#endif
 uid_t userid;
 int errs, remin, remout;
 int pflag, iamremote, iamrecursive, targetshouldbedirectory;
@@ -393,8 +406,10 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+#if 0 // TODO
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		fatal("unknown user %u", (u_int) userid);
+#endif
 
 	if (!isatty(STDERR_FILENO))
 		showprogress = 0;
