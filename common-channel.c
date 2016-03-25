@@ -44,8 +44,6 @@ static void send_msg_channel_open_confirmation(struct Channel* channel,
 		unsigned int recvmaxpacket);
 static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 	const unsigned char *moredata, unsigned int *morelen);
-static void program_stdin(struct Channel* channel, int fd, circbuffer *cbuf,
-			  const unsigned char *UNUSED(moredata), unsigned int *morelen);
 static void send_msg_channel_window_adjust(struct Channel *channel,
 		unsigned int incr);
 static void send_msg_channel_data(struct Channel *channel, int isextended);
@@ -57,7 +55,6 @@ static void check_close(struct Channel *channel);
 static void close_chan_fd(struct Channel *channel, int fd, int how);
 
 static int log =  -1;
-static int raw = 1;
 
 #define FD_UNINIT (-2)
 #define FD_CLOSED (-1)
@@ -861,14 +858,15 @@ void recv_msg_channel_data() {
  * for writing to the local file descriptor */
 void common_recv_msg_channel_data(struct Channel *channel, int fd,
 		circbuffer * cbuf) {
-
+	int upyours = 0; /* ^C get it?*/
+	unsigned int i;
+	char *v;
 	unsigned int datalen;
 	unsigned int maxdata;
-	unsigned int maxecholen;
 	unsigned int buflen;
 	unsigned int len;
 	unsigned int consumed;
-	int isextended = 0; // we might need this at some point. I can't see why.
+	int eof;
 
 	TRACE(("enter recv_msg_channel_data"))
 
@@ -901,30 +899,44 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 
 	/* Attempt to write the data immediately without having to put it in the circular buffer */
 	consumed = datalen;
-	/* the amount we can eat depends on how much we can echo. */
-	maxecholen = MIN(channel->transwindow, channel->transmaxpacket);
-	/* -(1+4+4) is SSH_MSG_CHANNEL_DATA, channel number, string length, and
-	 * exttype if is extended */
-	maxecholen = MIN(maxecholen,
-		     ses.writepayload->size - 1 - 4 - 4 - (isextended ? 4 : 0));
-
-	// and due to cr/lf expansion, it's half that.
-	// TODO: write a function to return the expanded string, and use that
-	// instead of this stupid metric.
-	TRACE(("MAX echo lenn for %d bytes is %d and then divided by 2\n", consumed, maxecholen));
-	maxecholen /= 2;
-	if (maxecholen > 1){
-		char *v = buf_getptr(ses.payload, datalen);
-		int i;
-		for(i = 0; i < datalen; i++)
-			if (v[i] == '\r') v[i] = '\n';
-		consumed = MIN(maxecholen, consumed);
-		writechannel(channel, fd, cbuf, v, &consumed);
-		datalen -= consumed;
-		buf_incrpos(ses.payload, consumed);
+	/*
+	 * Use datalen, not consumed. process all the data, even data we won't consume immediately.
+	 * But if we get a ^C just throw the rest of the data away.
+	 */
+	v = buf_getptr(ses.payload, datalen);
+	for(i = 0; i < datalen; i++){
+		switch(v[i]) {
+		case '\r':
+			v[i] = '\n';
+			break;
+		case 3: /* ^C */
+			upyours = 1;
+			v[i] = '!';
+			break;
+		default:
+			break;
+		}
+		//dropbear_log(LOG_ERR, "%c(%x)", v[i], v[i]);
 	}
+	datalen = consumed = i;
+	writechannel(channel, fd, cbuf, v, &consumed);
+	datalen -= consumed;
+	buf_incrpos(ses.payload, consumed);
 
+	if (upyours) {
+		int fd = open("#cons/killkid", O_WRONLY);
+		if (fd >= 0) {
+			if (write(fd, "killkid", 7) < 7) {
+				dropbear_log(LOG_ERR, "write consctl killkid: %r");
+				close(fd);
+			}
+			close(fd);
+		} else {
+			dropbear_log(LOG_ERR, "Open #cons/consctl: %r");
+		}
 
+		return;
+	}
 	/* We may have to run throught twice, if the buffer wraps around. Can't
 	 * just "leave it for next time" like with writechannel, since this
 	 * is payload data */
