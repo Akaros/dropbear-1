@@ -912,7 +912,9 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 			break;
 		case 3: /* ^C */
 			upyours = 1;
-			v[i] = '!';
+			/* TODO: we should flush the existing input data, but for now we'll
+			 * just enter it. */
+			v[i] = '\n';
 			break;
 		default:
 			break;
