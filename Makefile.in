@@ -10,7 +10,7 @@
 # Hopefully that seems intuitive.
 
 ifndef PROGRAMS
-	PROGRAMS=dropbear dbclient dropbearkey dropbearconvert
+	PROGRAMS=dropbear dbclient dropbearkey dropbearconvert scp
 endif
 
 STATIC_LTC=libtomcrypt/libtomcrypt.a
