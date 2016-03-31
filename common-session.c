@@ -50,35 +50,6 @@ int sessinitdone = 0; /* GLOBAL */
 /* this is set when we get SIGINT or SIGTERM, the handler is in main.c */
 int exitflag = 0; /* GLOBAL */
 
-#if 1
-int nbread(int fd, void *va, int n)
-{
-	static struct stat buf[8];
-	int amt = 0;
-	
-	if (fstat(fd, &buf[0]) < 0) {
-		dropbear_log(LOG_WARNING, "stat fd %d: %r\n", fd);
-		return -1;
-	}
-
-	if (buf[0].st_size == 0) {
-		errno = EINTR;
-	} else {
-//dropbear_log(LOG_WARNING, "nbread: fd %d has %ld \n", fd, buf[0].st_size);
-		if (buf[0].st_size > 0) {
-			if (n > buf[0].st_size)
-				n = buf[0].st_size;
-	//dropbear_log(LOG_WARNING, "nbread: try for %d\n", n);
-			amt = read(fd, va, n);
-		}
-	}
-
-	if (amt < 0)
-		dropbear_log(LOG_WARNING, "fd %d: %r\n", fd);
-
-	return amt;
-}
-#endif
 /* called only at the start of a session, set up initial state */
 void common_session_init(int sock_in, int sock_out) {
 	time_t now;
@@ -257,7 +228,7 @@ void session_loop(void(*loophandler)()) {
 			static char x[4096];
 	
 				//dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
-				while (nbread(ses.signal_pipe[0], x, sizeof(x)) > 0);
+				while (read(ses.signal_pipe[0], x, sizeof(x)) > 0);
 //HERE;
 		}
 

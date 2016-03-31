@@ -741,7 +741,6 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	char *out;
 	int outlen = 0;
 	int i;
-	int nbread(int fd, void *va, int n);
 	int shortread;
 	CHECKCLEARTOWRITE();
 
@@ -786,7 +785,7 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 		buflen = maxlen;
 	}
 	readlen = isextended ? maxlen : maxlen/2;
-	len = nbread(fd, buf, readlen);
+	len = read(fd, buf, readlen);
 	shortread = len < readlen;
 	out = buf_getwriteptr(ses.writepayload, maxlen);
 	for(i = 0; i < len; i++, outlen++, out++) {
@@ -801,7 +800,9 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	len = outlen;
 
 	if (len <= 0) {
-		if (len == 0 && errno != EINTR) {
+		// originally in DB this was
+		//if (len == 0 || errno != EINTR) {
+		if (len == 0 && (errno != EINTR && errno != EAGAIN)) {
 TRACE(("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EOF ON %d, len %d, errno %d closing\n", fd, len, errno));
 			/* This will also get hit in the case of EAGAIN. The only
 			time we expect to receive EAGAIN is when we're flushing a FD,
