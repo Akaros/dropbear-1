@@ -154,9 +154,6 @@ void session_loop(void(*loophandler)()) {
 		const int writequeue_has_space = (ses.writequeue_len <= 2*TRANS_MAX_PAYLOAD_LEN);
 
 		timeout.tv_sec = select_timeout();
-#if 1
-		timeout.tv_sec = 1;
-#endif
 		timeout.tv_usec = 0;
 		FD_ZERO(&writefd);
 		FD_ZERO(&readfd);
