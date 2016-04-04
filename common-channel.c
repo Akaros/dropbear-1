@@ -759,10 +759,10 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	/* -(1+4+4) is SSH_MSG_CHANNEL_DATA, channel number, string length, and
 	 * exttype if is extended */
 	maxlen = MIN(maxlen,
-		     ses.writepayload->size - 1 - 4 - 4 - (isextended ? 4 : 0));
-	TRACE(("maxlen %zd", maxlen));
-	if (maxlen < 2){
-		TRACE(("leave send_msg_channel_data: no window"));
+			ses.writepayload->size - 1 - 4 - 4 - (isextended ? 4 : 0));
+	TRACE(("maxlen %zd", maxlen))
+	if (maxlen == 0) {
+		TRACE(("leave send_msg_channel_data: no window"))
 		return;
 	}
 
@@ -776,34 +776,11 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	size_pos = ses.writepayload->pos;
 	buf_putint(ses.writepayload, 0);
 
-	// This all kind of assumes maxlen is > 1
 	/* read the data */
-	if (buflen < maxlen) {
-		buf = realloc(buf, maxlen);
-		// screw it. If we can't even allocate this buffer we'll
-		// take the segv.
-		buflen = maxlen;
-	}
-	readlen = isextended ? maxlen : maxlen/2;
-	len = read(fd, buf, readlen);
-	shortread = len < readlen;
-	out = buf_getwriteptr(ses.writepayload, maxlen);
-	for(i = 0; i < len; i++, outlen++, out++) {
-		*out = buf[i];
-		if (isextended)
-			continue;
-		if (*out == '\n') {
-			out++, outlen++;
-			*out = '\r';
-		}
-	}
-	len = outlen;
+	len = read(fd, buf_getwriteptr(ses.writepayload, maxlen), maxlen);
 
 	if (len <= 0) {
-		// originally in DB this was
-		//if (len == 0 || errno != EINTR) {
 		if (len == 0 && (errno != EINTR && errno != EAGAIN)) {
-TRACE(("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EOF ON %d, len %d, errno %d closing\n", fd, len, errno));
 			/* This will also get hit in the case of EAGAIN. The only
 			time we expect to receive EAGAIN is when we're flushing a FD,
 			in which case it can be treated the same as EOF */
@@ -837,7 +814,8 @@ TRACE(("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!EOF ON %d, len %d, errno %d cl
 
 	/* If we receive less data than we requested when flushing, we've
 	   reached the equivalent of EOF */
-	if (channel->flushing && shortread)
+	//if (channel->flushing && shortread)
+	if (channel->flushing && len < (ssize_t)maxlen)
 	{
 		TRACE(("closing from channel, flushing out."))
 		close_chan_fd(channel, fd, SHUT_RD);
@@ -900,46 +878,12 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 
 	/* Attempt to write the data immediately without having to put it in the circular buffer */
 	consumed = datalen;
-	/*
-	 * Use datalen, not consumed. process all the data, even data we won't consume immediately.
-	 * But if we get a ^C just throw the rest of the data away.
-	 */
-	v = buf_getptr(ses.payload, datalen);
-	for(i = 0; i < datalen; i++){
-		switch(v[i]) {
-		case '\r':
-			v[i] = '\n';
-			break;
-		case 3: /* ^C */
-			upyours = 1;
-			/* TODO: we should flush the existing input data, but for now we'll
-			 * just enter it. */
-			v[i] = '\n';
-			break;
-		default:
-			break;
-		}
-		//dropbear_log(LOG_ERR, "%c(%x)", v[i], v[i]);
-	}
-	datalen = consumed = i;
-	writechannel(channel, fd, cbuf, v, &consumed);
+	writechannel(channel, fd, cbuf, buf_getptr(ses.payload, datalen), &consumed);
+
 	datalen -= consumed;
 	buf_incrpos(ses.payload, consumed);
 
-	if (upyours) {
-		int fd = open("#cons/killkid", O_WRONLY);
-		if (fd >= 0) {
-			if (write(fd, "killkid", 7) < 7) {
-				dropbear_log(LOG_ERR, "write consctl killkid: %r");
-				close(fd);
-			}
-			close(fd);
-		} else {
-			dropbear_log(LOG_ERR, "Open #cons/consctl: %r");
-		}
 
-		return;
-	}
 	/* We may have to run throught twice, if the buffer wraps around. Can't
 	 * just "leave it for next time" like with writechannel, since this
 	 * is payload data */
