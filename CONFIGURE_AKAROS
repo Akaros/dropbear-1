@@ -5,9 +5,9 @@
 
 KFS=${AKAROS_ROOT}/kern/kfs/
 XCC=${AKAROS_XCC_ROOT}/bin/x86_64-ucb-akaros-gcc
-AKAROS_CFLAGS="-fno-omit-frame-pointer -g"
+AKAROS_CFLAGS="-fno-omit-frame-pointer -g -std=gnu99"
 AKAROS_LDFLAGS=""
-AKAROS_LIBS="-liplib"
+AKAROS_LIBS="-liplib -lpthread"
 
 function bootstrap()
 {
