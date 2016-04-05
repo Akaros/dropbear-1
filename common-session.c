@@ -368,7 +368,7 @@ static void read_session_identification() {
 	for (i = 0; i < 50; i++) {
 		len = ident_readln(ses.sock_in, linebuf, sizeof(linebuf));
 
-		if (len < 0 && errno != EINTR) {
+		if (len < 0 && (errno != EINTR && errno != EAGAIN)) {
 			/* It failed */
 			break;
 		}

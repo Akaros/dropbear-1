@@ -780,7 +780,7 @@ static void send_msg_channel_data(struct Channel *channel, int isextended) {
 	len = read(fd, buf_getwriteptr(ses.writepayload, maxlen), maxlen);
 
 	if (len <= 0) {
-		if (len == 0 && (errno != EINTR && errno != EAGAIN)) {
+		if (len == 0 || (errno != EINTR && errno != EAGAIN)) {
 			/* This will also get hit in the case of EAGAIN. The only
 			time we expect to receive EAGAIN is when we're flushing a FD,
 			in which case it can be treated the same as EOF */
