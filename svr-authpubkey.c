@@ -440,7 +440,7 @@ static int checkfileperm(char * filename) {
 	/* check permissions - don't want group or others +w */
 	if (filestat.st_mode & (S_IWGRP | S_IWOTH)) {
 		badperm = 1;
-		TRACE(("%s: wrong perms", filename))
+		TRACE(("wrong perms"))
 	}
 	if (badperm) {
 		if (!ses.authstate.perm_warn) {

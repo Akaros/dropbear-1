@@ -54,7 +54,7 @@ static int
 process_file(hash_state *hs, const char *filename,
 		unsigned int len, int prngd)
 {
-//	static int already_blocked = 0;
+	static int already_blocked = 0;
 	int readfd;
 	unsigned int readcount;
 	int ret = DROPBEAR_FAILURE;
@@ -118,7 +118,7 @@ process_file(hash_state *hs, const char *filename,
 			egdcmd[1] = (unsigned char)wantread;
 			if (write(readfd, egdcmd, 2) < 0)
 			{
-				dropbear_exit("%s %d: Can't send command to egd", __FILE__, __LINE__);
+				dropbear_exit("Can't send command to egd");
 			}
 		}
 #endif
@@ -191,14 +191,14 @@ void seedrandom() {
 #ifdef DROPBEAR_PRNGD_SOCKET
 	if (process_file(&hs, DROPBEAR_PRNGD_SOCKET, INIT_SEED_SIZE, 1) 
 			!= DROPBEAR_SUCCESS) {
-		dropbear_exit("%s %d: Failure reading random device %s", __FILE__, __LINE__, 
+		dropbear_exit("Failure reading random device %s", 
 				DROPBEAR_PRNGD_SOCKET);
 	}
 #else
 	/* non-blocking random source (probably /dev/urandom) */
 	if (process_file(&hs, DROPBEAR_URANDOM_DEV, INIT_SEED_SIZE, 0) 
 			!= DROPBEAR_SUCCESS) {
-		dropbear_exit("%s %d: Failure reading random device %s", __FILE__, __LINE__, 
+		dropbear_exit("Failure reading random device %s", 
 				DROPBEAR_URANDOM_DEV);
 	}
 #endif
@@ -258,7 +258,7 @@ void genrandom(unsigned char* buf, unsigned int len) {
 	unsigned int copylen;
 
 	if (!donerandinit) {
-		dropbear_exit("%s %d: seedrandom not done", __FILE__, __LINE__);
+		dropbear_exit("seedrandom not done");
 	}
 
 	while (len > 0) {

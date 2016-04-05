@@ -83,7 +83,7 @@ void common_session_init(int sock_in, int sock_out) {
 	ses.last_packet_time_keepalive_sent = 0;
 	
 	if (pipe(ses.signal_pipe) < 0) {
-		dropbear_exit("%s %d: Signal pipe failed", __FILE__, __LINE__);
+		dropbear_exit("Signal pipe failed");
 	}
 	setnonblocking(ses.signal_pipe[0]);
 	setnonblocking(ses.signal_pipe[1]);
@@ -161,17 +161,13 @@ void session_loop(void(*loophandler)()) {
 
 		/* We get woken up when signal handlers write to this pipe.
 		   SIGCHLD in svr-chansession is the only one currently. */
-//dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.signal_pipe[0]);
 		FD_SET(ses.signal_pipe[0], &readfd);
-//HERE;
 
 		/* set up for channels which can be read/written */
 		setchannelfds(&readfd, &writefd, writequeue_has_space);
-//HERE;
 
 		/* Pending connections to test */
 		set_connect_fds(&writefd);
-//HERE;
 
 		/* We delay reading from the input socket during initial setup until
 		after we have written out our initial KEXINIT packet (empty writequeue). 
@@ -182,33 +178,26 @@ void session_loop(void(*loophandler)()) {
 		if (ses.sock_in != -1 
 			&& (ses.remoteident || isempty(&ses.writequeue)) 
 			&& writequeue_has_space) {
-//dropbear_log(LOG_WARNING, "main loop, Set %d into readfd\n", ses.sock_in);
 			FD_SET(ses.sock_in, &readfd);
 		}
-//HERE;
 
 		/* Ordering is important, this test must occur after any other function
 		might have queued packets (such as connection handlers) */
 		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
-//dropbear_log(LOG_WARNING, "main loop, Set %d into writefd\n", ses.sock_in);
 			FD_SET(ses.sock_out, &writefd);
 		}
-//HERE;
 
-//dropbear_log(LOG_WARNING, "select on %d sockets\n", ses.maxfd+1);
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
-//		dropbear_log(LOG_WARNING, "after select in main loop %s %d val %d %r \n", __FILE__, __LINE__, val, "gcc is too smart for its own good");
-//HERE;
+
 		if (exitflag) {
-			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
+			dropbear_exit("Terminated by signal");
 		}
-//	HERE;	
+		
 		if (val < 0 && errno != EINTR) {
-			dropbear_exit("%s %d: Error in select", __FILE__, __LINE__);
+			dropbear_exit("Error in select");
 		}
-//HERE;
+
 		if (val <= 0) {
-//HERE;
 			/* If we were interrupted or the select timed out, we still
 			 * want to iterate over channels etc for reading, to handle
 			 * server processes exiting etc. 
@@ -221,28 +210,20 @@ void session_loop(void(*loophandler)()) {
 		any thing with the data, since the pipe's purpose is purely to
 		wake up the select() above. */
 		if (FD_ISSET(ses.signal_pipe[0], &readfd)) {
-//HERE;
-			static char x[4096];
-	
-				//dropbear_log(LOG_WARNING, "empty out fd %d\n", ses.signal_pipe[0]);
-				while (read(ses.signal_pipe[0], x, sizeof(x)) > 0);
-//HERE;
+			char x;
+			while (read(ses.signal_pipe[0], &x, 1) > 0) {}
 		}
 
 		/* check for auth timeout, rekeying required etc */
 		checktimeouts();
-//HERE;
-//dropbear_log(LOG_WARNING, "ses.sock_in  readfd %d\n", ses.sock_in);
+
 		/* process session socket's incoming data */
 		if (ses.sock_in != -1) {
 			if (FD_ISSET(ses.sock_in, &readfd)) {
-//HERE;
 				if (!ses.remoteident) {
-//HERE;
 					/* blocking read of the version string */
 					read_session_identification();
 				} else {
-//HERE;
 					read_packet();
 				}
 			}
@@ -250,11 +231,10 @@ void session_loop(void(*loophandler)()) {
 			/* Process the decrypted packet. After this, the read buffer
 			 * will be ready for a new packet */
 			if (ses.payload != NULL) {
-//HERE;
 				process_packet();
 			}
 		}
-//HERE;
+
 		/* if required, flush out any queued reply packets that
 		were being held up during a KEX */
 		maybe_flush_reply_queue();
@@ -267,7 +247,6 @@ void session_loop(void(*loophandler)()) {
 
 		/* process session socket's outgoing data */
 		if (ses.sock_out != -1) {
-//HERE;
 			if (!isempty(&ses.writequeue)) {
 				write_packet();
 			}
@@ -277,7 +256,6 @@ void session_loop(void(*loophandler)()) {
 		if (loophandler) {
 			loophandler();
 		}
-//HERE;
 
 	} /* for(;;) */
 	
@@ -364,7 +342,6 @@ static void read_session_identification() {
 	char done = 0;
 	int i;
 	/* If they send more than 50 lines, something is wrong */
-//	TRACE(("%s: read from %d\n", __func__, ses.sock_in));
 	for (i = 0; i < 50; i++) {
 		len = ident_readln(ses.sock_in, linebuf, sizeof(linebuf));
 
@@ -392,7 +369,7 @@ static void read_session_identification() {
 	/* Shall assume that 2.x will be backwards compatible. */
 	if (strncmp(ses.remoteident, "SSH-2.", 6) != 0
 			&& strncmp(ses.remoteident, "SSH-1.99-", 9) != 0) {
-		dropbear_exit("%s %d: Incompatible remote version '%s'", __FILE__, __LINE__, ses.remoteident);
+		dropbear_exit("Incompatible remote version '%s'", ses.remoteident);
 	}
 
 	TRACE(("remoteident: %s", ses.remoteident))
@@ -421,11 +398,11 @@ static int ident_readln(int fd, char* buf, int count) {
 	
 	/* leave space to null-terminate */
 	while (pos < count-1) {
+
 		FD_SET(fd, &fds);
 
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 10000;
-
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
 		if (select(fd+1, &fds, NULL, NULL, &timeout) < 0) {
 			if (errno == EINTR) {
 				continue;
@@ -433,15 +410,14 @@ static int ident_readln(int fd, char* buf, int count) {
 			TRACE(("leave ident_readln: select error"))
 			return -1;
 		}
+
 		checktimeouts();
 		
-//TRACE(("ident_readln: read from %d\n", fd));
 		/* Have to go one byte at a time, since we don't want to read past
 		 * the end, and have to somehow shove bytes back into the normal
 		 * packet reader */
 		if (FD_ISSET(fd, &fds)) {
 			num = read(fd, &in, 1);
-//TRACE(("ident_readln: num %d, in %c\n", num, in));
 			/* a "\n" is a newline, "\r" we want to read in and keep going
 			 * so that it won't be read as part of the next line */
 			if (num < 0) {
@@ -449,14 +425,13 @@ static int ident_readln(int fd, char* buf, int count) {
 				if ((errno == EINTR) || (errno == EAGAIN)) {
 					continue; /* not a real error */
 				}
-				perror("ident_readln");
 				TRACE(("leave ident_readln: read error"))
 				return -1;
 			}
 			if (num == 0) {
 				/* EOF */
 				TRACE(("leave ident_readln: EOF"))
-				continue; //return -1;
+				return -1;
 			}
 			if (in == '\n') {
 				/* end of ident string */
@@ -550,7 +525,7 @@ static void checktimeouts() {
 
 		if (now - ses.last_packet_time_keepalive_recv 
 			>= opts.keepalive_secs * DEFAULT_KEEPALIVE_LIMIT) {
-			dropbear_exit("%s %d: Keepalive timeout", __FILE__, __LINE__);
+			dropbear_exit("Keepalive timeout");
 		}
 	}
 
@@ -624,8 +599,7 @@ void fill_passwd(const char* username) {
 
 	pw = getpwnam(username);
 	if (!pw) {
-		dropbear_log(LOG_WARNING, "FUCK. getwname for %s failed", username);
-		//return;
+		return;
 	}
 	ses.authstate.pw_uid = pw->pw_uid;
 	ses.authstate.pw_gid = pw->pw_gid;

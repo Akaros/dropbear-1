@@ -98,7 +98,7 @@ void recv_msg_kexdh_reply() {
 	TRACE(("enter recv_msg_kexdh_reply"))
 
 	if (cli_ses.kex_state != KEXDH_INIT_SENT) {
-		dropbear_exit("%s %d: Received out-of-order kexdhreply", __FILE__, __LINE__);
+		dropbear_exit("Received out-of-order kexdhreply");
 	}
 	type = ses.newkeys->algo_hostkey;
 	TRACE(("type is %d", type))
@@ -114,7 +114,7 @@ void recv_msg_kexdh_reply() {
 
 	if (buf_get_pub_key(ses.payload, hostkey, &type) != DROPBEAR_SUCCESS) {
 		TRACE(("failed getting pubkey"))
-		dropbear_exit("%s %d: Bad KEX packet", __FILE__, __LINE__);
+		dropbear_exit("Bad KEX packet");
 	}
 
 	switch (ses.newkeys->algo_kex->mode) {
@@ -124,7 +124,7 @@ void recv_msg_kexdh_reply() {
 			m_mp_init(&dh_f);
 			if (buf_getmpint(ses.payload, &dh_f) != DROPBEAR_SUCCESS) {
 				TRACE(("failed getting mpint"))
-				dropbear_exit("%s %d: Bad KEX packet", __FILE__, __LINE__);
+				dropbear_exit("Bad KEX packet");
 			}
 
 			kexdh_comb_key(cli_ses.dh_param, &dh_f, hostkey);
@@ -170,7 +170,7 @@ void recv_msg_kexdh_reply() {
 
 	cli_ses.param_kex_algo = NULL;
 	if (buf_verify(ses.payload, hostkey, ses.hash) != DROPBEAR_SUCCESS) {
-		dropbear_exit("%s %d: Bad hostkey signature", __FILE__, __LINE__);
+		dropbear_exit("Bad hostkey signature");
 	}
 
 	sign_key_free(hostkey);
@@ -202,7 +202,7 @@ static void ask_to_confirm(unsigned char* keyblob, unsigned int keybloblen,
 			algoname,
 			fp);
 	m_free(fp);
-fprintf(stderr, "open the tty\n");
+
 	tty = fopen(_PATH_TTY, "r");
 	if (tty) {
 		response = getc(tty);
@@ -215,7 +215,7 @@ fprintf(stderr, "open the tty\n");
 		return;
 	}
 
-	dropbear_exit("%s %d: Didn't validate host key", __FILE__, __LINE__);
+	dropbear_exit("Didn't validate host key");
 }
 
 static FILE* open_known_hosts_file(int * readonly)
@@ -357,11 +357,10 @@ static void checkhostkey(unsigned char* keyblob, unsigned int keybloblen) {
 
 		/* The keys didn't match. eep. Note that we're "leaking"
 		   the fingerprint strings here, but we're exiting anyway */
-		dropbear_exit("%s %d: \n\n%s host key mismatch for %s !\n"
+		dropbear_exit("\n\n%s host key mismatch for %s !\n"
 					"Fingerprint is %s\n"
 					"Expected %s\n"
 					"If you know that the host key is correct you can\nremove the bad entry from ~/.ssh/known_hosts", 
-			      __FILE__, __LINE__,
 					algoname,
 					cli_opts.remotehost,
 					sign_key_fingerprint(keyblob, keybloblen),

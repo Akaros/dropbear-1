@@ -48,7 +48,7 @@ dropbear_dss_key * gen_dss_priv_key(unsigned int size) {
 	dropbear_dss_key *key;
 
 	if (size != 1024) {
-		dropbear_exit("%s %d: DSS keys have a fixed size of 1024 bits", __FILE__, __LINE__);
+		dropbear_exit("DSS keys have a fixed size of 1024 bits");
 	}
 
 	key = m_malloc(sizeof(*key));

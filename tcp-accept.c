@@ -63,7 +63,6 @@ static void tcp_acceptor(struct Listener *listener, int sock) {
 	len = sizeof(addr);
 
 	fd = accept(sock, (struct sockaddr*)&addr, &len);
-dropbear_log(LOG_WARNING, "accept on %d\n", fd);
 	if (fd < 0) {
 		return;
 	}
@@ -71,7 +70,6 @@ dropbear_log(LOG_WARNING, "accept on %d\n", fd);
 	if (getnameinfo((struct sockaddr*)&addr, len, ipstring, sizeof(ipstring),
 				portstring, sizeof(portstring), 
 				NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
-dropbear_log(LOG_WARNING, "getnameinfo failed\n");
 		m_close(fd);
 		return;
 	}
@@ -107,7 +105,6 @@ dropbear_log(LOG_WARNING, "getnameinfo failed\n");
 		encrypt_packet();
 
 	} else {
-dropbear_log(LOG_WARNING, "sendmsgchanopen FUCK\n");
 		/* XXX debug? */
 		close(fd);
 	}

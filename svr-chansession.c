@@ -103,7 +103,7 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-		TRACE(("sigchld handler: pid %d has EXITED", pid))
+		TRACE(("sigchld handler: pid %d", pid))
 
 		exit = NULL;
 		/* find the corresponding chansess */
@@ -144,7 +144,6 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 			about an error so should just ignore it */
 			if (write(ses.signal_pipe[1], &ses.isserver, 1) == 1
 					|| errno != EINTR) {
-TRACE(("wake up main select loop, meaning a child has exited, we don't know why"));
 				break;
 			}
 		}
@@ -482,7 +481,7 @@ static void get_termmodes(struct ChanSess *chansess) {
 	TRACE(("term mode str %d p->l %d p->p %d", 
 				len, ses.payload->len , ses.payload->pos));
 	if (len != ses.payload->len - ses.payload->pos) {
-		dropbear_exit("%s %d: Bad term mode string", __FILE__, __LINE__);
+		dropbear_exit("Bad term mode string");
 	}
 
 	if (len == 0) {
@@ -577,7 +576,7 @@ static int sessionpty(struct ChanSess * chansess) {
 
 	/* allocate the pty */
 	if (chansess->master != -1) {
-		dropbear_exit("%s %d: Multiple pty requests", __FILE__, __LINE__);
+		dropbear_exit("Multiple pty requests");
 	}
 	if (pty_allocate(&chansess->master, &chansess->slave, namebuf, 64) == 0) {
 		TRACE(("leave sessionpty: failed to allocate pty"))
@@ -586,7 +585,7 @@ static int sessionpty(struct ChanSess * chansess) {
 	
 	chansess->tty = m_strdup(namebuf);
 	if (!chansess->tty) {
-		dropbear_exit("%s %d: Out of memory", __FILE__, __LINE__); /* TODO disconnect */
+		dropbear_exit("Out of memory"); /* TODO disconnect */
 	}
 
 	if (0) {
@@ -772,7 +771,6 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 #endif
 
 	TRACE(("enter ptycommand"))
-	TRACE(("------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>enter ptycommand"))
 
 	/* we need to have a pty allocated */
 	if (chansess->master == -1 || chansess->tty == NULL) {
@@ -792,10 +790,9 @@ static int ptycommand(struct Channel *channel, struct ChanSess *chansess) {
 		/* child */
 		
 		TRACE(("back to normal sigchld"))
-//{ char c; while (read(chansess->slave, &c, 1)  > 0) { if (write(chansess->slave, &c, 1) < 1) {} }}
 		/* Revert to normal sigchld handling */
 		if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
-			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+			dropbear_exit("signal() error");
 		}
 		
 		/* redirect stdin/stdout/stderr */
@@ -932,10 +929,10 @@ static void execchild(void *user_data) {
 		if ((setgid(ses.authstate.pw_gid) < 0) ||
 			(initgroups(ses.authstate.pw_name, 
 						ses.authstate.pw_gid) < 0)) {
-			dropbear_exit("%s %d: Error changing user group", __FILE__, __LINE__);
+			dropbear_exit("Error changing user group");
 		}
 		if (setuid(ses.authstate.pw_uid) < 0) {
-			dropbear_exit("%s %d: Error changing user", __FILE__, __LINE__);
+			dropbear_exit("Error changing user");
 		}
 	} else {
 		/* ... but if the daemon is the same uid as the requested uid, we don't
@@ -946,7 +943,7 @@ static void execchild(void *user_data) {
 		 * differing groups won't be set (as with initgroups()). The solution
 		 * is for the sysadmin not to give out the UID twice */
 		if (getuid() != ses.authstate.pw_uid) {
-			dropbear_exit("%s %d: Couldn't	change user as non-root", __FILE__, __LINE__);
+			dropbear_exit("Couldn't	change user as non-root");
 		}
 	}
 #endif
@@ -980,7 +977,7 @@ static void execchild(void *user_data) {
 
 	/* change directory */
 	if (chdir(ses.authstate.pw_dir) < 0) {
-		dropbear_exit("%s %d: Error changing directory", __FILE__, __LINE__);
+		dropbear_exit("Error changing directory");
 	}
 
 #ifndef DISABLE_X11FWD
@@ -996,7 +993,7 @@ static void execchild(void *user_data) {
 	run_shell_command(chansess->cmd, ses.maxfd, usershell);
 
 	/* only reached on error */
-	dropbear_exit("%s %d: Child failed", __FILE__, __LINE__);
+	dropbear_exit("Child failed");
 }
 
 /* Set up the general chansession environment, in particular child-exit
@@ -1015,7 +1012,7 @@ void svr_chansessinitialise() {
 	sa_chld.sa_flags = SA_NOCLDSTOP;
 	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 	
 }
@@ -1036,6 +1033,6 @@ void addnewvar(const char* param, const char* var) {
 	newvar[plen+vlen+1] = '\0';
 	/* newvar is leaked here, but that's part of putenv()'s semantics */
 	if (putenv(newvar) < 0) {
-		dropbear_exit("%s %d: environ error", __FILE__, __LINE__);
+		dropbear_exit("environ error");
 	}
 }

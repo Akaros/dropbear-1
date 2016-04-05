@@ -106,7 +106,6 @@ void dropbear_exit(const char* format, ...) {
 
 	va_list param;
 
-//	_dropbear_log(LOG_INFO, "%r: ");
 	va_start(param, format);
 	_dropbear_exit(EXIT_FAILURE, format, param);
 	va_end(param);
@@ -125,7 +124,7 @@ static void generic_dropbear_exit(int exitcode, const char* format,
 }
 
 void fail_assert(const char* expr, const char* file, int line) {
-	dropbear_exit("%s %d: Failed assertion (%s:%d): `%s'", __FILE__, __LINE__, file, line, expr);
+	dropbear_exit("Failed assertion (%s:%d): `%s'", file, line, expr);
 }
 
 static void generic_dropbear_log(int UNUSED(priority), const char* format, 
@@ -279,7 +278,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 		TRACE(("back to normal sigchld"))
 		/* Revert to normal sigchld handling */
 		if (signal(SIGCHLD, SIG_DFL) == SIG_ERR) {
-			dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+			dropbear_exit("signal() error");
 		}
 
 		/* redirect stdin/stdout */
@@ -288,7 +287,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 			(dup2(outfds[FDOUT], STDOUT_FILENO) < 0) ||
 			(ret_errfd && dup2(errfds[FDOUT], STDERR_FILENO) < 0)) {
 			TRACE(("leave noptycommand: error redirecting FDs"))
-			dropbear_exit("%s %d: Child dup2() failure", __FILE__, __LINE__);
+			dropbear_exit("Child dup2() failure");
 		}
 
 		close(infds[FDOUT]);
@@ -360,7 +359,7 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 
 	/* Re-enable SIGPIPE for the executed process */
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 
 	/* close file descriptors except stdin/stdout/stderr
@@ -368,9 +367,7 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	for (i = 3; i <= maxfd; i++) {
 		m_close(i);
 	}
-	//usershell = "/bin/testssh";
-TRACE(("=================================== exec %s =========================\r\n", usershell));
-for(i = 0; argv[i]; i++) TRACE(("arg %d: %s\n", i, argv[i]));
+
 	execv(usershell, argv);
 }
 
@@ -508,7 +505,6 @@ out:
 /* make sure that the socket closes */
 void m_close(int fd) {
 	int val;
-TRACE((")))))))))))))))))))0 close %d\n", fd));
 
 	if (fd == -1) {
 		return;
@@ -520,7 +516,7 @@ TRACE((")))))))))))))))))))0 close %d\n", fd));
 
 	if (val < 0 && errno != EBADF) {
 		/* Linux says EIO can happen */
-		dropbear_exit("%s %d: Error closing fd %d, %s", __FILE__, __LINE__, fd, strerror(errno));
+		dropbear_exit("Error closing fd %d, %s", fd, strerror(errno));
 	}
 }
 	
@@ -529,11 +525,11 @@ void * m_malloc(size_t size) {
 	void* ret;
 
 	if (size == 0) {
-		dropbear_exit("%s %d: m_malloc failed", __FILE__, __LINE__);
+		dropbear_exit("m_malloc failed");
 	}
 	ret = calloc(1, size);
 	if (ret == NULL) {
-		dropbear_exit("%s %d: m_malloc failed", __FILE__, __LINE__);
+		dropbear_exit("m_malloc failed");
 	}
 	return ret;
 
@@ -544,7 +540,7 @@ void * m_strdup(const char * str) {
 
 	ret = strdup(str);
 	if (ret == NULL) {
-		dropbear_exit("%s %d: m_strdup failed", __FILE__, __LINE__);
+		dropbear_exit("m_strdup failed");
 	}
 	return ret;
 }
@@ -554,11 +550,11 @@ void * m_realloc(void* ptr, size_t size) {
 	void *ret;
 
 	if (size == 0) {
-		dropbear_exit("%s %d: m_realloc failed", __FILE__, __LINE__);
+		dropbear_exit("m_realloc failed");
 	}
 	ret = realloc(ptr, size);
 	if (ret == NULL) {
-		dropbear_exit("%s %d: m_realloc failed", __FILE__, __LINE__);
+		dropbear_exit("m_realloc failed");
 	}
 	return ret;
 }
@@ -588,7 +584,7 @@ void setnonblocking(int fd) {
 			 * can't be set to non-blocking */
 			TRACE(("ignoring ENODEV for setnonblocking"))
 		} else {
-			dropbear_exit("%s %d: Couldn't set nonblocking", __FILE__, __LINE__);
+			dropbear_exit("Couldn't set nonblocking");
 		}
 	}
 	TRACE(("leave setnonblocking"))
@@ -680,7 +676,7 @@ time_t monotonic_now() {
 		struct timespec ts;
 		if (syscall(SYS_clock_gettime, clock_source, &ts) != 0) {
 			/* Intermittent clock failures should not happen */
-			dropbear_exit("%s %d: Clock broke", __FILE__, __LINE__);
+			dropbear_exit("Clock broke");
 		}
 		return ts.tv_sec;
 	}

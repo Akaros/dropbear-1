@@ -82,7 +82,7 @@ void write_packet() {
 			TRACE2(("leave write_packet: EINTR"))
 			return;
 		} else {
-			dropbear_exit("%s %d: Error writing: %s", __FILE__, __LINE__, strerror(errno));
+			dropbear_exit("Error writing: %s", strerror(errno));
 		}
 	}
 
@@ -112,7 +112,7 @@ void write_packet() {
 			TRACE2(("leave writepacket: EINTR"))
 			return;
 		} else {
-			dropbear_exit("%s %d: Error writing: %s", __FILE__, __LINE__, strerror(errno));
+			dropbear_exit("Error writing: %s", strerror(errno));
 		}
 	} 
 
@@ -155,14 +155,14 @@ void read_packet() {
 		/* Read the first blocksize of the packet, so we can decrypt it and
 		 * find the length of the whole packet */
 		ret = read_packet_init();
-//HERE;
+
 		if (ret == DROPBEAR_FAILURE) {
 			/* didn't read enough to determine the length */
 			TRACE2(("leave read_packet: packetinit done"))
 			return;
 		}
 	}
-//HERE;
+
 	/* Attempt to read the remainder of the packet, note that there
 	 * mightn't be any available (EAGAIN) */
 	maxlen = ses.readbuf->len - ses.readbuf->pos;
@@ -183,7 +183,7 @@ void read_packet() {
 				TRACE2(("leave read_packet: EINTR or EAGAIN"))
 				return;
 			} else {
-				dropbear_exit("%s %d: Error reading: %s", __FILE__, __LINE__, strerror(errno));
+				dropbear_exit("Error reading: %s", strerror(errno));
 			}
 		}
 
@@ -233,7 +233,7 @@ static int read_packet_init() {
 			TRACE2(("leave read_packet_init: EINTR"))
 			return DROPBEAR_FAILURE;
 		}
-		dropbear_exit("%s %d: Error reading: %s", __FILE__, __LINE__, strerror(errno));
+		dropbear_exit("Error reading: %s", strerror(errno));
 	}
 
 	buf_incrwritepos(ses.readbuf, slen);
@@ -250,7 +250,7 @@ static int read_packet_init() {
 				buf_getwriteptr(ses.readbuf, blocksize),
 				blocksize,
 				&ses.keys->recv.cipher_state) != CRYPT_OK) {
-		dropbear_exit("%s %d: Error decrypting", __FILE__, __LINE__);
+		dropbear_exit("Error decrypting");
 	}
 	len = buf_getint(ses.readbuf) + 4 + macsize;
 
@@ -261,7 +261,7 @@ static int read_packet_init() {
 	if ((len > RECV_MAX_PACKET_LEN) ||
 		(len < MIN_PACKET_LEN + macsize) ||
 		((len - macsize) % blocksize != 0)) {
-		dropbear_exit("%s %d: Integrity error (bad packet size %u)", __FILE__, __LINE__, len);
+		dropbear_exit("Integrity error (bad packet size %u)", len);
 	}
 
 	if (len > ses.readbuf->size) {
@@ -296,13 +296,13 @@ void decrypt_packet() {
 				buf_getwriteptr(ses.readbuf, len),
 				len,
 				&ses.keys->recv.cipher_state) != CRYPT_OK) {
-		dropbear_exit("%s %d: Error decrypting", __FILE__, __LINE__);
+		dropbear_exit("Error decrypting");
 	}
 	buf_incrpos(ses.readbuf, len);
 
 	/* check the hmac */
 	if (checkmac() != DROPBEAR_SUCCESS) {
-		dropbear_exit("%s %d: Integrity error", __FILE__, __LINE__);
+		dropbear_exit("Integrity error");
 	}
 
 	/* get padding length */
@@ -313,7 +313,7 @@ void decrypt_packet() {
 	/* - 4 - 1 is for LEN and PADLEN values */
 	len = ses.readbuf->len - padlen - 4 - 1 - macsize;
 	if ((len > RECV_MAX_PAYLOAD_LEN+ZLIB_COMPRESS_EXPANSION) || (len < 1)) {
-		dropbear_exit("%s %d: Bad packet size %u", __FILE__, __LINE__, len);
+		dropbear_exit("Bad packet size %u", len);
 	}
 
 	buf_setpos(ses.readbuf, PACKET_PAYLOAD_OFF);
@@ -391,7 +391,7 @@ static buffer* buf_decompress(buffer* buf, unsigned int len) {
 		buf_setpos(ret, ret->len);
 
 		if (result != Z_BUF_ERROR && result != Z_OK) {
-			dropbear_exit("%s %d: zlib error", __FILE__, __LINE__);
+			dropbear_exit("zlib error");
 		}
 
 		if (zstream->avail_in == 0 &&
@@ -406,7 +406,7 @@ static buffer* buf_decompress(buffer* buf, unsigned int len) {
 			if (ret->size >= RECV_MAX_PAYLOAD_LEN) {
 				/* Already been increased as large as it can go,
 				 * yet didn't finish up the decompression */
-				dropbear_exit("%s %d: bad packet, oversized decompressed", __FILE__, __LINE__);
+				dropbear_exit("bad packet, oversized decompressed");
 			}
 			new_size = MIN(RECV_MAX_PAYLOAD_LEN, ret->size + ZLIB_DECOMPRESS_INCR);
 			ret = buf_resize(ret, new_size);
@@ -572,7 +572,7 @@ void encrypt_packet() {
 				buf_getwriteptr(writebuf, len),
 				len,
 				&ses.keys->trans.cipher_state) != CRYPT_OK) {
-		dropbear_exit("%s %d: Error encrypting", __FILE__, __LINE__);
+		dropbear_exit("Error encrypting");
 	}
 	buf_incrpos(writebuf, len);
 
@@ -628,13 +628,13 @@ static void make_mac(unsigned int seqno, const struct key_context_directional * 
 					key_state->hash_index,
 					key_state->mackey,
 					key_state->algo_mac->keysize) != CRYPT_OK) {
-			dropbear_exit("%s %d: HMAC error", __FILE__, __LINE__);
+			dropbear_exit("HMAC error");
 		}
 	
 		/* sequence number */
 		STORE32H(seqno, seqbuf);
 		if (hmac_process(&hmac, seqbuf, 4) != CRYPT_OK) {
-			dropbear_exit("%s %d: HMAC error", __FILE__, __LINE__);
+			dropbear_exit("HMAC error");
 		}
 	
 		/* the actual contents */
@@ -642,12 +642,12 @@ static void make_mac(unsigned int seqno, const struct key_context_directional * 
 		if (hmac_process(&hmac, 
 					buf_getptr(clear_buf, clear_len),
 					clear_len) != CRYPT_OK) {
-			dropbear_exit("%s %d: HMAC error", __FILE__, __LINE__);
+			dropbear_exit("HMAC error");
 		}
 	
         bufsize = MAX_MAC_LEN;
 		if (hmac_done(&hmac, output_mac, &bufsize) != CRYPT_OK) {
-			dropbear_exit("%s %d: HMAC error", __FILE__, __LINE__);
+			dropbear_exit("HMAC error");
 		}
 	}
 	TRACE2(("leave writemac"))
@@ -681,7 +681,7 @@ static void buf_compress(buffer * dest, buffer * src, unsigned int len) {
 	buf_setpos(dest, dest->len);
 
 	if (result != Z_OK) {
-		dropbear_exit("%s %d: zlib error", __FILE__, __LINE__);
+		dropbear_exit("zlib error");
 	}
 
 	/* fails if destination buffer wasn't large enough */

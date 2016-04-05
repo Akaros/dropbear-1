@@ -57,7 +57,7 @@ void dropbear_ecc_fill_dp() {
 			}
 		}
 		if (!(*curve)->dp) {
-			dropbear_exit("%s %d: Missing ECC params %s", __FILE__, __LINE__, (*curve)->name);
+			dropbear_exit("Missing ECC params %s", (*curve)->name);
 		}
 	}
 }
@@ -139,7 +139,7 @@ void buf_put_ecc_raw_pubkey_string(buffer *buf, ecc_key *key) {
 	buf_putint(buf, len);
 	err = ecc_ansi_x963_export(key, buf_getwriteptr(buf, len), &len);
 	if (err != CRYPT_OK) {
-		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
+		dropbear_exit("ECC error");
 	}
 	buf_incrwritepos(buf, len);
 }
@@ -262,7 +262,7 @@ mp_int * dropbear_ecc_shared_secret(ecc_key *public_key, ecc_key *private_key)
 	}
 
 	if (err == DROPBEAR_FAILURE) {
-		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
+		dropbear_exit("ECC error");
 	}
 	return shared_secret;
 }

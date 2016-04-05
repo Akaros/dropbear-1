@@ -58,7 +58,7 @@ sign_key * new_sign_key() {
  * if the type is invalid */
 const char* signkey_name_from_type(enum signkey_type type, unsigned int *namelen) {
 	if (type >= DROPBEAR_SIGNKEY_NUM_NAMED) {
-		dropbear_exit("%s %d: Bad key type %d", __FILE__, __LINE__, type);
+		dropbear_exit("Bad key type %d", type);
 	}
 
 	if (namelen) {
@@ -300,7 +300,7 @@ void buf_put_pub_key(buffer* buf, sign_key *key, enum signkey_type type) {
 	}
 #endif
 	if (pubkeys->len == 0) {
-		dropbear_exit("%s %d: Bad key types in buf_put_pub_key", __FILE__, __LINE__);
+		dropbear_exit("Bad key types in buf_put_pub_key");
 	}
 
 	buf_putbufstring(buf, pubkeys);
@@ -338,7 +338,7 @@ void buf_put_priv_key(buffer* buf, sign_key *key, enum signkey_type type) {
 		}
 	}
 #endif
-	dropbear_exit("%s %d: Bad key types in put pub key", __FILE__, __LINE__);
+	dropbear_exit("Bad key types in put pub key");
 }
 
 void sign_key_free(sign_key *key) {
@@ -501,7 +501,7 @@ void buf_put_sign(buffer* buf, sign_key *key, enum signkey_type type,
 	}
 #endif
 	if (sigblob->len == 0) {
-		dropbear_exit("%s %d: Non-matching signing type", __FILE__, __LINE__);
+		dropbear_exit("Non-matching signing type");
 	}
 	buf_putbufstring(buf, sigblob);
 	buf_free(sigblob);
@@ -529,7 +529,7 @@ int buf_verify(buffer * buf, sign_key *key, buffer *data_buf) {
 #ifdef DROPBEAR_DSS
 	if (type == DROPBEAR_SIGNKEY_DSS) {
 		if (key->dsskey == NULL) {
-			dropbear_exit("%s %d: No DSS key to verify signature", __FILE__, __LINE__);
+			dropbear_exit("No DSS key to verify signature");
 		}
 		return buf_dss_verify(buf, key->dsskey, data_buf);
 	}
@@ -538,7 +538,7 @@ int buf_verify(buffer * buf, sign_key *key, buffer *data_buf) {
 #ifdef DROPBEAR_RSA
 	if (type == DROPBEAR_SIGNKEY_RSA) {
 		if (key->rsakey == NULL) {
-			dropbear_exit("%s %d: No RSA key to verify signature", __FILE__, __LINE__);
+			dropbear_exit("No RSA key to verify signature");
 		}
 		return buf_rsa_verify(buf, key->rsakey, data_buf);
 	}
@@ -552,7 +552,7 @@ int buf_verify(buffer * buf, sign_key *key, buffer *data_buf) {
 	}
 #endif
 
-	dropbear_exit("%s %d: Non-matching signing type", __FILE__, __LINE__);
+	dropbear_exit("Non-matching signing type");
 	return DROPBEAR_FAILURE;
 }
 #endif /* DROPBEAR_SIGNKEY_VERIFY */

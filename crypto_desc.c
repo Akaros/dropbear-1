@@ -50,20 +50,20 @@ void crypto_init() {
 	
 	for (i = 0; regciphers[i] != NULL; i++) {
 		if (register_cipher(regciphers[i]) == -1) {
-			dropbear_exit("%s %d: Error registering crypto", __FILE__, __LINE__);
+			dropbear_exit("Error registering crypto");
 		}
 	}
 
 	for (i = 0; reghashes[i] != NULL; i++) {
 		if (register_hash(reghashes[i]) == -1) {
-			dropbear_exit("%s %d: Error registering crypto", __FILE__, __LINE__);
+			dropbear_exit("Error registering crypto");
 		}
 	}
 
 #ifdef DROPBEAR_LTC_PRNG
 	dropbear_ltc_prng = register_prng(&dropbear_prng_desc);
 	if (dropbear_ltc_prng == -1) {
-		dropbear_exit("%s %d: Error registering crypto", __FILE__, __LINE__);
+		dropbear_exit("Error registering crypto");
 	}
 #endif
 

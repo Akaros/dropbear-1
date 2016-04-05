@@ -177,7 +177,7 @@ void svr_getopts(int argc, char ** argv) {
 		if (next) {
 			*next = argv[i];
 			if (*next == NULL) {
-				dropbear_exit("%s %d: Invalid null argument", __FILE__, __LINE__);
+				dropbear_exit("Invalid null argument");
 			}
 			next = 0x00;
 
@@ -302,18 +302,18 @@ void svr_getopts(int argc, char ** argv) {
 	if (svr_opts.bannerfile) {
 		struct stat buf;
 		if (stat(svr_opts.bannerfile, &buf) != 0) {
-			dropbear_exit("%s %d: Error opening banner file '%s'", __FILE__, __LINE__,
+			dropbear_exit("Error opening banner file '%s'",
 					svr_opts.bannerfile);
 		}
 		
 		if (buf.st_size > MAX_BANNER_SIZE) {
-			dropbear_exit("%s %d: Banner file too large, max is %d bytes", __FILE__, __LINE__,
+			dropbear_exit("Banner file too large, max is %d bytes",
 					MAX_BANNER_SIZE);
 		}
 
 		svr_opts.banner = buf_new(buf.st_size);
 		if (buf_readfile(svr_opts.banner, svr_opts.bannerfile)!=DROPBEAR_SUCCESS) {
-			dropbear_exit("%s %d: Error reading banner file '%s'", __FILE__, __LINE__,
+			dropbear_exit("Error reading banner file '%s'",
 					svr_opts.bannerfile);
 		}
 		buf_setpos(svr_opts.banner, 0);
@@ -322,14 +322,14 @@ void svr_getopts(int argc, char ** argv) {
 	if (recv_window_arg) {
 		opts.recv_window = atol(recv_window_arg);
 		if (opts.recv_window == 0 || opts.recv_window > MAX_RECV_WINDOW) {
-			dropbear_exit("%s %d: Bad recv window '%s'", __FILE__, __LINE__, recv_window_arg);
+			dropbear_exit("Bad recv window '%s'", recv_window_arg);
 		}
 	}
 	
 	if (keepalive_arg) {
 		unsigned int val;
 		if (m_str_to_uint(keepalive_arg, &val) == DROPBEAR_FAILURE) {
-			dropbear_exit("%s %d: Bad keepalive '%s'", __FILE__, __LINE__, keepalive_arg);
+			dropbear_exit("Bad keepalive '%s'", keepalive_arg);
 		}
 		opts.keepalive_secs = val;
 	}
@@ -337,7 +337,7 @@ void svr_getopts(int argc, char ** argv) {
 	if (idle_timeout_arg) {
 		unsigned int val;
 		if (m_str_to_uint(idle_timeout_arg, &val) == DROPBEAR_FAILURE) {
-			dropbear_exit("%s %d: Bad idle_timeout '%s'", __FILE__, __LINE__, idle_timeout_arg);
+			dropbear_exit("Bad idle_timeout '%s'", idle_timeout_arg);
 		}
 		opts.idle_timeout_secs = val;
 	}
@@ -357,13 +357,13 @@ static void addportandaddress(char* spec) {
 			svr_opts.ports[svr_opts.portcount] = strchr(myspec, ']');
 			if (svr_opts.ports[svr_opts.portcount] == NULL) {
 				/* Unmatched [ -> exit */
-				dropbear_exit("%s %d: Bad listen address", __FILE__, __LINE__);
+				dropbear_exit("Bad listen address");
 			}
 			svr_opts.ports[svr_opts.portcount][0] = '\0';
 			svr_opts.ports[svr_opts.portcount]++;
 			if (svr_opts.ports[svr_opts.portcount][0] != ':') {
 				/* Missing port -> exit */
-				dropbear_exit("%s %d: Missing port", __FILE__, __LINE__);
+				dropbear_exit("Missing port");
 			}
 		} else {
 			/* search for ':', that separates address and port */
@@ -387,7 +387,7 @@ static void addportandaddress(char* spec) {
 
 		if (svr_opts.ports[svr_opts.portcount][0] == '\0') {
 			/* empty port -> exit */
-			dropbear_exit("%s %d: Bad port", __FILE__, __LINE__);
+			dropbear_exit("Bad port");
 		}
 
 		svr_opts.portcount++;
@@ -408,7 +408,7 @@ static void disablekey(int type) {
 static void loadhostkey_helper(const char *name, void** src, void** dst, int fatal_duplicate) {
 	if (*dst) {
 		if (fatal_duplicate) {
-			dropbear_exit("%s %d: Only one %s key can be specified", __FILE__, __LINE__, name);
+			dropbear_exit("Only one %s key can be specified", name);
 		}
 	} else {
 		*dst = *src;
@@ -462,7 +462,7 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate) {
 
 static void addhostkey(const char *keyfile) {
 	if (svr_opts.num_hostkey_files >= MAX_HOSTKEYS) {
-		dropbear_exit("%s %d: Too many hostkeys", __FILE__, __LINE__);
+		dropbear_exit("Too many hostkeys");
 	}
 	svr_opts.hostkey_files[svr_opts.num_hostkey_files] = m_strdup(keyfile);
 	svr_opts.num_hostkey_files++;
@@ -546,6 +546,6 @@ void load_all_hostkeys() {
 #endif /* DROPBEAR_ECDSA */
 
 	if (!any_keys) {
-		dropbear_exit("%s %d: No hostkeys available", __FILE__, __LINE__);
+		dropbear_exit("No hostkeys available");
 	}
 }

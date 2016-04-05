@@ -109,15 +109,15 @@ static void check_signkey_bits(enum signkey_type type, int bits)
 #ifdef DROPBEAR_RSA
             case DROPBEAR_SIGNKEY_RSA:
                 if (bits < 512 || bits > 4096 || (bits % 8 != 0)) {
-                	dropbear_exit("%s %d: Bits must satisfy 512 <= bits <= 4096, and be a"
-                            " multiple of 8\n", __FILE__, __LINE__);
+                	dropbear_exit("Bits must satisfy 512 <= bits <= 4096, and be a"
+                            " multiple of 8\n");
                 }
                 break;
 #endif
 #ifdef DROPEAR_DSS
             case DROPBEAR_SIGNKEY_DSS:
                 if (bits != 1024) {
-                    dropbear_exit("%s %d: DSS keys have a fixed size of 1024 bits\n", __FILE__, __LINE__);
+                    dropbear_exit("DSS keys have a fixed size of 1024 bits\n");
                     exit(EXIT_FAILURE);
                 }
 #endif
@@ -243,7 +243,7 @@ int main(int argc, char ** argv) {
 	fprintf(stderr, "Generating key, this may take a while...\n");
     if (signkey_generate(keytype, bits, filename) == DROPBEAR_FAILURE)
     {
-    	dropbear_exit("%s %d: Failed to generate key.\n", __FILE__, __LINE__);
+    	dropbear_exit("Failed to generate key.\n");
     }
 
 	printpubfile(filename);

@@ -284,30 +284,30 @@ void buf_put_dss_sign(buffer* buf, dropbear_dss_key *key, buffer *data_buf) {
 
 	/* g^k mod p */
 	if (mp_exptmod(key->g, &dss_k, key->p, &dss_temp1) !=  MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 	/* r = (g^k mod p) mod q */
 	if (mp_mod(&dss_temp1, key->q, &dss_r) != MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 
 	/* x*r mod q */
 	if (mp_mulmod(&dss_r, key->x, key->q, &dss_temp1) != MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 	/* (SHA1(M) + xr) mod q) */
 	if (mp_addmod(&dss_m, &dss_temp1, key->q, &dss_temp2) != MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 	
 	/* (k^-1) mod q */
 	if (mp_invmod(&dss_k, key->q, &dss_temp1) != MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 
 	/* s = (k^-1(SHA1(M) + xr)) mod q */
 	if (mp_mulmod(&dss_temp1, &dss_temp2, key->q, &dss_s) != MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 
 	buf_putstring(buf, SSH_SIGNKEY_DSS, SSH_SIGNKEY_DSS_LEN);
@@ -321,7 +321,7 @@ void buf_put_dss_sign(buffer* buf, dropbear_dss_key *key, buffer *data_buf) {
 	}
 	if (mp_to_unsigned_bin(&dss_r, buf_getwriteptr(buf, writelen)) 
 			!= MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 	mp_clear(&dss_r);
 	buf_incrwritepos(buf, writelen);
@@ -334,7 +334,7 @@ void buf_put_dss_sign(buffer* buf, dropbear_dss_key *key, buffer *data_buf) {
 	}
 	if (mp_to_unsigned_bin(&dss_s, buf_getwriteptr(buf, writelen)) 
 			!= MP_OKAY) {
-		dropbear_exit("%s %d: DSS error", __FILE__, __LINE__);
+		dropbear_exit("DSS error");
 	}
 	mp_clear(&dss_s);
 	buf_incrwritepos(buf, writelen);

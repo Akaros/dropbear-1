@@ -71,7 +71,7 @@ int main(int argc, char ** argv)
 	/* notreached */
 #endif
 
-	dropbear_exit("%s %d: Compiled without normal mode, can't run without -i\n", __FILE__, __LINE__);
+	dropbear_exit("Compiled without normal mode, can't run without -i\n");
 	return -1;
 }
 #endif
@@ -135,7 +135,7 @@ void main_noinetd() {
 	listensockcount = listensockets(listensocks, MAX_LISTEN_ADDR, &maxsock);
 	if (listensockcount == 0)
 	{
-		dropbear_exit("%s %d: No listening ports available.", __FILE__, __LINE__);
+		dropbear_exit("No listening ports available.");
 	}
 
 	for (i = 0; i < listensockcount; i++) {
@@ -151,7 +151,7 @@ void main_noinetd() {
 		}
 #endif
 		if (daemon(0, closefds) < 0) {
-			dropbear_exit("%s %d: Failed to daemonize: %s", __FILE__, __LINE__, strerror(errno));
+			dropbear_exit("Failed to daemonize: %s", strerror(errno));
 		}
 	}
 
@@ -180,26 +180,24 @@ void main_noinetd() {
 		
 		/* listening sockets */
 		for (i = 0; i < listensockcount; i++) {
-//fprintf(stderr, "%s: Set sock %d\n", __FILE__, listensocks[i]);
 			FD_SET(listensocks[i], &fds);
 		}
 
 		/* pre-authentication clients */
 		for (i = 0; i < MAX_UNAUTH_CLIENTS; i++) {
 			if (childpipes[i] >= 0) {
-//fprintf(stderr, "%s: Set pipefd %d\n", __FILE__, childpipes[i]);
 				FD_SET(childpipes[i], &fds);
 				maxsock = MAX(maxsock, childpipes[i]);
 			}
 		}
-//fprintf(stderr, "select on %d sockets\n", maxsock+1);
+
 		val = select(maxsock+1, &fds, NULL, NULL, NULL);
 
 		if (exitflag) {
 			unlink(svr_opts.pidfile);
-			dropbear_exit("%s %d: Terminated by signal", __FILE__, __LINE__);
+			dropbear_exit("Terminated by signal");
 		}
-
+		
 		if (val == 0) {
 			/* timeout reached - shouldn't happen. eh */
 			continue;
@@ -209,7 +207,7 @@ void main_noinetd() {
 			if (errno == EINTR) {
 				continue;
 			}
-			dropbear_exit("%s %d: Listening socket error %d %r", __FILE__, __LINE__, val, val);
+			dropbear_exit("Listening socket error");
 		}
 
 		/* close fds which have been authed or closed - svr-auth.c handles
@@ -310,7 +308,7 @@ void main_noinetd() {
 #ifndef DEBUG_NOFORK
 				if (0)
 				if (setsid() < 0) {
-					/*dropbear_exit*/ printf("setsid: %s", strerror(errno));
+					dropbear_exit("setsid: %s", strerror(errno));
 				}
 #endif
 
@@ -353,7 +351,7 @@ static void sigchld_handler(int UNUSED(unused)) {
 	sa_chld.sa_flags = SA_NOCLDSTOP;
 	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 	errno = saved_errno;
 }
@@ -387,7 +385,7 @@ static void commonsetup() {
 		signal(SIGTERM, sigintterm_handler) == SIG_ERR ||
 #endif
 		signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 
 	/* catch and reap zombie children */
@@ -395,10 +393,10 @@ static void commonsetup() {
 	sa_chld.sa_flags = SA_NOCLDSTOP;
 	sigemptyset(&sa_chld.sa_mask);
 	if (sigaction(SIGCHLD, &sa_chld, NULL) < 0) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 	if (signal(SIGSEGV, sigsegv_handler) == SIG_ERR) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 
 	crypto_init();

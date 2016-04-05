@@ -43,7 +43,7 @@ buffer* buf_new(unsigned int size) {
 	buffer* buf;
 	
 	if (size > BUF_MAX_SIZE) {
-		dropbear_exit("%s %d: buf->size too big", __FILE__, __LINE__);
+		dropbear_exit("buf->size too big");
 	}
 
 	buf = (buffer*)m_malloc(sizeof(buffer)+size);
@@ -78,7 +78,7 @@ void buf_burn(buffer* buf) {
 buffer* buf_resize(buffer *buf, unsigned int newsize) {
 
 	if (newsize > BUF_MAX_SIZE) {
-		dropbear_exit("%s %d: buf->size too big", __FILE__, __LINE__);
+		dropbear_exit("buf->size too big");
 	}
 
 	buf = m_realloc(buf, sizeof(buffer)+newsize);
@@ -106,7 +106,7 @@ buffer* buf_newcopy(buffer* buf) {
 /* Set the length of the buffer */
 void buf_setlen(buffer* buf, unsigned int len) {
 	if (len > buf->size) {
-		dropbear_exit("%s %d: Bad buf_setlen", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_setlen");
 	}
 	buf->len = len;
 }
@@ -114,7 +114,7 @@ void buf_setlen(buffer* buf, unsigned int len) {
 /* Increment the length of the buffer */
 void buf_incrlen(buffer* buf, unsigned int incr) {
 	if (incr > BUF_MAX_INCR || buf->len + incr > buf->size) {
-		dropbear_exit("%s %d: Bad buf_incrlen", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_incrlen");
 	}
 	buf->len += incr;
 }
@@ -122,7 +122,7 @@ void buf_incrlen(buffer* buf, unsigned int incr) {
 void buf_setpos(buffer* buf, unsigned int pos) {
 
 	if (pos > buf->len) {
-		dropbear_exit("%s %d: Bad buf_setpos", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_setpos");
 	}
 	buf->pos = pos;
 }
@@ -130,7 +130,7 @@ void buf_setpos(buffer* buf, unsigned int pos) {
 /* increment the position by incr, increasing the buffer length if required */
 void buf_incrwritepos(buffer* buf, unsigned int incr) {
 	if (incr > BUF_MAX_INCR || buf->pos + incr > buf->size) {
-		dropbear_exit("%s %d: Bad buf_incrwritepos", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_incrwritepos");
 	}
 	buf->pos += incr;
 	if (buf->pos > buf->len) {
@@ -141,12 +141,11 @@ void buf_incrwritepos(buffer* buf, unsigned int incr) {
 /* increment the position by incr, negative values are allowed, to
  * decrement the pos*/
 void buf_incrpos(buffer* buf,  int incr) {
-	if (incr > BUF_MAX_INCR)
-		dropbear_exit("%s %d: Bad buf_incrpos: %d is greater than BUF_MAX_INCR %d", __FILE__, __LINE__, incr, BUF_MAX_INCR);
-	if ((unsigned int)((int)buf->pos + incr) > buf->len)
-		dropbear_exit("%s %d: Bad buf_incrpos: incr %d but buf->len is %d", __FILE__, __LINE__, incr, buf->len);
-	if (((int)buf->pos + incr) < 0)
-		dropbear_exit("%s %d: Bad buf_incrpos: buf->pos is %p, incr is %d, result is < 0", __FILE__, __LINE__, (void *)((int)buf->pos + incr), incr);
+	if (incr > BUF_MAX_INCR ||
+			(unsigned int)((int)buf->pos + incr) > buf->len 
+			|| ((int)buf->pos + incr) < 0) {
+		dropbear_exit("Bad buf_incrpos");
+	}
 	buf->pos += incr;
 }
 
@@ -156,7 +155,7 @@ unsigned char buf_getbyte(buffer* buf) {
 	/* This check is really just ==, but the >= allows us to check for the
 	 * bad case of pos > len, which should _never_ happen. */
 	if (buf->pos >= buf->len) {
-		dropbear_exit("%s %d: Bad buf_getbyte", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_getbyte");
 	}
 	return buf->data[buf->pos++];
 }
@@ -186,7 +185,7 @@ void buf_putbyte(buffer* buf, unsigned char val) {
 unsigned char* buf_getptr(buffer* buf, unsigned int len) {
 
 	if (buf->pos + len > buf->len) {
-		dropbear_exit("%s %d: Bad buf_getptr", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_getptr");
 	}
 	return &buf->data[buf->pos];
 }
@@ -196,7 +195,7 @@ unsigned char* buf_getptr(buffer* buf, unsigned int len) {
 unsigned char* buf_getwriteptr(buffer* buf, unsigned int len) {
 
 	if (buf->pos + len > buf->size) {
-		dropbear_exit("%s %d: Bad buf_getwriteptr", __FILE__, __LINE__);
+		dropbear_exit("Bad buf_getwriteptr");
 	}
 	return &buf->data[buf->pos];
 }
@@ -210,7 +209,7 @@ char* buf_getstring(buffer* buf, unsigned int *retlen) {
 	char* ret;
 	len = buf_getint(buf);
 	if (len > MAX_STRING_LEN) {
-		dropbear_exit("%s %d: String too long", __FILE__, __LINE__);
+		dropbear_exit("String too long");
 	}
 
 	if (retlen != NULL) {
@@ -229,7 +228,7 @@ buffer * buf_getstringbuf(buffer *buf) {
 	buffer *ret = NULL;
 	unsigned int len = buf_getint(buf);
 	if (len > MAX_STRING_LEN) {
-		dropbear_exit("%s %d: String too long", __FILE__, __LINE__);
+		dropbear_exit("String too long");
 	}
 	ret = buf_new(len);
 	memcpy(buf_getwriteptr(ret, len), buf_getptr(buf, len), len);
@@ -293,7 +292,7 @@ void buf_putmpint(buffer* buf, mp_int * mp) {
 	dropbear_assert(mp != NULL);
 
 	if (SIGN(mp) == MP_NEG) {
-		dropbear_exit("%s %d: negative bignum", __FILE__, __LINE__);
+		dropbear_exit("negative bignum");
 	}
 
 	/* zero check */
@@ -319,7 +318,7 @@ void buf_putmpint(buffer* buf, mp_int * mp) {
 			buf_putbyte(buf, 0x00);
 		}
 		if (mp_to_unsigned_bin(mp, buf_getwriteptr(buf, len-pad)) != MP_OKAY) {
-			dropbear_exit("%s %d: mpint error", __FILE__, __LINE__);
+			dropbear_exit("mpint error");
 		}
 		buf_incrwritepos(buf, len-pad);
 	}

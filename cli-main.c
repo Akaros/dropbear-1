@@ -63,7 +63,7 @@ int main(int argc, char ** argv) {
 				cli_opts.remotehost, cli_opts.remoteport))
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
-		dropbear_exit("%s %d: signal() error", __FILE__, __LINE__);
+		dropbear_exit("signal() error");
 	}
 
 #ifdef ENABLE_CLI_PROXYCMD
@@ -128,7 +128,7 @@ static void exec_proxy_cmd(void *user_data_cmd) {
 
 	usershell = m_strdup(get_user_shell());
 	run_shell_command(cmd, ses.maxfd, usershell);
-	dropbear_exit("%s %d: Failed to run '%s'\n", __FILE__, __LINE__, cmd);
+	dropbear_exit("Failed to run '%s'\n", cmd);
 }
 
 #ifdef ENABLE_CLI_PROXYCMD
@@ -140,7 +140,7 @@ static void cli_proxy_cmd(int *sock_in, int *sock_out) {
 	ret = spawn_command(exec_proxy_cmd, cli_opts.proxycmd,
 			sock_out, sock_in, NULL, NULL);
 	if (ret == DROPBEAR_FAILURE) {
-		dropbear_exit("%s %d: Failed running proxy command", __FILE__, __LINE__);
+		dropbear_exit("Failed running proxy command");
 		*sock_in = *sock_out = -1;
 	}
 }

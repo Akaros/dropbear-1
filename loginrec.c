@@ -263,7 +263,7 @@ int
 login_init_entry(struct logininfo *li, int pid, const char *username,
 		 const char *hostname, const char *line)
 {
-//	struct passwd *pw;
+	struct passwd *pw;
 
 	memset(li, 0, sizeof(*li));
 
@@ -280,8 +280,8 @@ login_init_entry(struct logininfo *li, int pid, const char *username,
 #else
 		pw = getpwnam(li->username);
 		if (pw == NULL)
-			dropbear_exit("%s %d: login_init_entry: Cannot find user \"%s\"",
-				      __FILE__, __LINE__, li->username);
+			dropbear_exit("login_init_entry: Cannot find user \"%s\"",
+					li->username);
 		li->uid = pw->pw_uid;
 #endif
 	}

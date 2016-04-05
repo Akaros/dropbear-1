@@ -146,7 +146,7 @@ void recv_msg_userauth_specific_60() {
 	}
 #endif
 
-	dropbear_exit("%s %d: Unexpected userauth packet", __FILE__, __LINE__);
+	dropbear_exit("Unexpected userauth packet");
 }
 
 void recv_msg_userauth_failure() {
@@ -167,7 +167,7 @@ void recv_msg_userauth_failure() {
 
 	if (cli_ses.state != USERAUTH_REQ_SENT) {
 		/* Perhaps we should be more fatal? */
-		dropbear_exit("%s %d: Unexpected userauth failure", __FILE__, __LINE__);
+		dropbear_exit("Unexpected userauth failure");
 	}
 
 	/* When DROPBEAR_CLI_IMMEDIATE_AUTH is set there will be an initial response for 
@@ -341,7 +341,7 @@ char* getpass_or_cancel(char* prompt)
 #endif
 
 	password = getpass(prompt);
-write(1, "fuck\n", 5);
+
 	/* 0x03 is a ctrl-c character in the buffer. */
 	if (password == NULL || strchr(password, '\3') != NULL) {
 		dropbear_close("Interrupted.");

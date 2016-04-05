@@ -401,7 +401,6 @@ static struct openssh_key *load_openssh_key(const char *filename)
 		if (0 == strncmp(buffer, "-----END ", 9) &&
 			0 == strcmp(buffer+strlen(buffer)-17, "PRIVATE KEY-----\n"))
 			break;					   /* done */
-//HERE;
 		if ((p = strchr(buffer, ':')) != NULL) {
 			if (headers_done) {
 				errmsg = "Header found in body of key data";
@@ -1076,7 +1075,7 @@ static int openssh_write(const char *filename, sign_key *key,
 				curve_oid = OID_SEC521R1_BLOB;
 				break;
 			default:
-				dropbear_exit("%s %d: Internal error", __FILE__, __LINE__);
+				dropbear_exit("Internal error");
 		}
 
 		buf_incrwritepos(seq_buf,
@@ -1093,7 +1092,7 @@ static int openssh_write(const char *filename, sign_key *key,
 		buf_putbyte(seq_buf, 0);
 		err = ecc_ansi_x963_export(*eck, buf_getwriteptr(seq_buf, pubkey_size), &pubkey_size);
 		if (err != CRYPT_OK) {
-			dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
+			dropbear_exit("ECC error");
 		}
 		buf_incrwritepos(seq_buf, pubkey_size);
 
@@ -1302,7 +1301,6 @@ static struct sshcom_key *load_sshcom_key(const char *filename)
 		}
 		if (!strcmp(buffer, "---- END SSH2 ENCRYPTED PRIVATE KEY ----\n"))
 			break;					 /* done */
-//HERE;
 		if ((p = strchr(buffer, ':')) != NULL) {
 			if (headers_done) {
 				errmsg = "Header found in body of key data";

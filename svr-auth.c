@@ -132,7 +132,7 @@ void recv_msg_userauth_request() {
 		m_free(username);
 		m_free(servicename);
 		m_free(methodname);
-		dropbear_exit("%s %d: unknown service in auth", __FILE__, __LINE__);
+		dropbear_exit("unknown service in auth");
 	}
 
 	/* check username is good before continuing. 
@@ -375,7 +375,7 @@ void send_msg_userauth_failure(int partial, int incrfail) {
 		} else {
 			userstr = ses.authstate.pw_name;
 		}
-		dropbear_exit("%s %d: Max auth tries reached - user '%s' from %s", __FILE__, __LINE__,
+		dropbear_exit("Max auth tries reached - user '%s' from %s",
 				userstr, svr_ses.addrstring);
 	}
 	

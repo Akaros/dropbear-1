@@ -41,8 +41,6 @@ static char* get_response(char* prompt)
 
 	fprintf(stderr, "%s", prompt);
 
-	TRACE((LOG_WARNING, "OPENING THE TTY\n"));
-
 	tty = fopen(_PATH_TTY, "r");
 	if (tty) {
 		ret = fgets(buf, sizeof(buf), tty);
@@ -95,7 +93,7 @@ void recv_msg_userauth_info_request() {
 	num_prompts = buf_getint(ses.payload);
 	
 	if (num_prompts >= DROPBEAR_MAX_CLI_INTERACT_PROMPTS) {
-		dropbear_exit("%s %d: Too many prompts received for keyboard-interactive", __FILE__, __LINE__);
+		dropbear_exit("Too many prompts received for keyboard-interactive");
 	}
 
 	/* we'll build the response as we go */

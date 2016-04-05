@@ -185,7 +185,6 @@ void set_connect_fds(fd_set *writefd) {
 		}
 		if (c->sock >= 0) {
 			FD_SET(c->sock, writefd);
-			TRACE(("FD_SET set_connect_fds %d\n", c->sock));
 		} else {
 			/* Final failure */
 			if (!c->errstring) {
@@ -196,7 +195,6 @@ void set_connect_fds(fd_set *writefd) {
 		}
 		iter = next_iter;
 	}
-	TRACE(("exit set_connect_fds"))
 }
 
 void handle_connect_fds(fd_set *writefd) {
@@ -309,7 +307,7 @@ void set_sock_priority(int sock, enum dropbear_prio prio) {
 	int iptos_val = 0;
 #endif
 #ifdef SO_PRIORITY
-// XXX 	int so_prio_val = 0;
+	int so_prio_val = 0;
 #endif
 
 
@@ -487,14 +485,14 @@ void get_socket_address(int fd, char **local_host, char **local_port,
 	if (local_host || local_port) {
 		addrlen = sizeof(addr);
 		if (getsockname(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
-			dropbear_exit("%s %d: Failed socket address: %s", __FILE__, __LINE__, strerror(errno));
+			dropbear_exit("Failed socket address: %s", strerror(errno));
 		}
 		getaddrstring(&addr, local_host, local_port, host_lookup);		
 	}
 	if (remote_host || remote_port) {
 		addrlen = sizeof(addr);
 		if (getpeername(fd, (struct sockaddr*)&addr, &addrlen) < 0) {
-			dropbear_exit("%s %d: Failed socket address: %s", __FILE__, __LINE__, strerror(errno));
+			dropbear_exit("Failed socket address: %s", strerror(errno));
 		}
 		getaddrstring(&addr, remote_host, remote_port, host_lookup);		
 	}
@@ -548,7 +546,7 @@ void getaddrstring(struct sockaddr_storage* addr,
 			return;
 		} else {
 			/* if we can't do a numeric lookup, something's gone terribly wrong */
-			dropbear_exit("%s %d: Failed lookup: %s", __FILE__, __LINE__, gai_strerror(ret));
+			dropbear_exit("Failed lookup: %s", gai_strerror(ret));
 		}
 	}
 

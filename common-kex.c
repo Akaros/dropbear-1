@@ -164,7 +164,7 @@ void send_msg_kexinit() {
 static void switch_keys() {
 	TRACE2(("enter switch_keys"))
 	if (!(ses.kexstate.sentkexinit && ses.kexstate.recvkexinit)) {
-		dropbear_exit("%s %d: Unexpected newkeys message", __FILE__, __LINE__);
+		dropbear_exit("Unexpected newkeys message");
 	}
 
 	if (!ses.keys) {
@@ -372,24 +372,24 @@ static void gen_new_keys() {
 	if (ses.newkeys->recv.algo_crypt->cipherdesc != NULL) {
 		int recv_cipher = find_cipher(ses.newkeys->recv.algo_crypt->cipherdesc->name);
 		if (recv_cipher < 0)
-			dropbear_exit("%s %d: Crypto error", __FILE__, __LINE__);
+			dropbear_exit("Crypto error");
 		if (ses.newkeys->recv.crypt_mode->start(recv_cipher, 
 				recv_IV, recv_key, 
 				ses.newkeys->recv.algo_crypt->keysize, 0, 
 				&ses.newkeys->recv.cipher_state) != CRYPT_OK) {
-			dropbear_exit("%s %d: Crypto error", __FILE__, __LINE__);
+			dropbear_exit("Crypto error");
 		}
 	}
 
 	if (ses.newkeys->trans.algo_crypt->cipherdesc != NULL) {
 		int trans_cipher = find_cipher(ses.newkeys->trans.algo_crypt->cipherdesc->name);
 		if (trans_cipher < 0)
-			dropbear_exit("%s %d: Crypto error", __FILE__, __LINE__);
+			dropbear_exit("Crypto error");
 		if (ses.newkeys->trans.crypt_mode->start(trans_cipher, 
 				trans_IV, trans_key, 
 				ses.newkeys->trans.algo_crypt->keysize, 0, 
 				&ses.newkeys->trans.cipher_state) != CRYPT_OK) {
-			dropbear_exit("%s %d: Crypto error", __FILE__, __LINE__);
+			dropbear_exit("Crypto error");
 		}
 	}
 
@@ -444,7 +444,7 @@ static void gen_new_zstream_recv() {
 		ses.newkeys->recv.zstream->zfree = Z_NULL;
 		
 		if (inflateInit(ses.newkeys->recv.zstream) != Z_OK) {
-			dropbear_exit("%s %d: zlib error", __FILE__, __LINE__);
+			dropbear_exit("zlib error");
 		}
 	} else {
 		ses.newkeys->recv.zstream = NULL;
@@ -453,7 +453,7 @@ static void gen_new_zstream_recv() {
 	if (ses.keys->recv.zstream != NULL) {
 		if (inflateEnd(ses.keys->recv.zstream) == Z_STREAM_ERROR) {
 			/* Z_DATA_ERROR is ok, just means that stream isn't ended */
-			dropbear_exit("%s %d: Crypto error", __FILE__, __LINE__);
+			dropbear_exit("Crypto error");
 		}
 		m_free(ses.keys->recv.zstream);
 	}
@@ -471,7 +471,7 @@ static void gen_new_zstream_trans() {
 					Z_DEFLATED, DROPBEAR_ZLIB_WINDOW_BITS, 
 					DROPBEAR_ZLIB_MEM_LEVEL, Z_DEFAULT_STRATEGY)
 				!= Z_OK) {
-			dropbear_exit("%s %d: zlib error", __FILE__, __LINE__);
+			dropbear_exit("zlib error");
 		}
 	} else {
 		ses.newkeys->trans.zstream = NULL;
@@ -480,7 +480,7 @@ static void gen_new_zstream_trans() {
 	if (ses.keys->trans.zstream != NULL) {
 		if (deflateEnd(ses.keys->trans.zstream) == Z_STREAM_ERROR) {
 			/* Z_DATA_ERROR is ok, just means that stream isn't ended */
-			dropbear_exit("%s %d: Crypto error", __FILE__, __LINE__);
+			dropbear_exit("Crypto error");
 		}
 		m_free(ses.keys->trans.zstream);
 	}
@@ -595,16 +595,16 @@ struct kex_dh_param *gen_kexdh_param() {
 	load_dh_p(&dh_p);
 	
 	if (mp_set_int(&dh_g, DH_G_VAL) != MP_OKAY) {
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 
 	/* calculate q = (p-1)/2 */
 	/* dh_priv is just a temp var here */
 	if (mp_sub_d(&dh_p, 1, &param->priv) != MP_OKAY) { 
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 	if (mp_div_2(&param->priv, &dh_q) != MP_OKAY) {
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 
 	/* Generate a private portion 0 < dh_priv < dh_q */
@@ -612,7 +612,7 @@ struct kex_dh_param *gen_kexdh_param() {
 
 	/* f = g^y mod p */
 	if (mp_exptmod(&dh_g, &param->priv, &dh_p, &param->pub) != MP_OKAY) {
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 	mp_clear_multi(&dh_g, &dh_p, &dh_q, NULL);
 	return param;
@@ -639,19 +639,19 @@ void kexdh_comb_key(struct kex_dh_param *param, mp_int *dh_pub_them,
 	load_dh_p(&dh_p);
 
 	if (mp_sub_d(&dh_p, 1, &dh_p_min1) != MP_OKAY) { 
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 
 	/* Check that dh_pub_them (dh_e or dh_f) is in the range [2, p-2] */
 	if (mp_cmp(dh_pub_them, &dh_p_min1) != MP_LT 
 			|| mp_cmp_d(dh_pub_them, 1) != MP_GT) {
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 	
 	/* K = e^y mod p = f^x mod p */
 	m_mp_alloc_init_multi(&ses.dh_K, NULL);
 	if (mp_exptmod(dh_pub_them, &param->priv, &dh_p, ses.dh_K) != MP_OKAY) {
-		dropbear_exit("%s %d: Diffie-Hellman error", __FILE__, __LINE__);
+		dropbear_exit("Diffie-Hellman error");
 	}
 
 	/* clear no longer needed vars */
@@ -686,7 +686,7 @@ struct kex_ecdh_param *gen_kexecdh_param() {
 	struct kex_ecdh_param *param = m_malloc(sizeof(*param));
 	if (ecc_make_key_ex(NULL, dropbear_ltc_prng, 
 		&param->key, ses.newkeys->algo_kex->ecc_curve->dp) != CRYPT_OK) {
-		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
+		dropbear_exit("ECC error");
 	}
 	return param;
 }
@@ -704,7 +704,7 @@ void kexecdh_comb_key(struct kex_ecdh_param *param, buffer *pub_them,
 
 	Q_them = buf_get_ecc_raw_pubkey(pub_them, algo_kex->ecc_curve);
 	if (Q_them == NULL) {
-		dropbear_exit("%s %d: ECC error", __FILE__, __LINE__);
+		dropbear_exit("ECC error");
 	}
 
 	ses.dh_K = dropbear_ecc_shared_secret(Q_them, &param->key);
@@ -763,7 +763,7 @@ void kexcurve25519_comb_key(struct kex_curve25519_param *param, buffer *buf_pub_
 
 	if (buf_pub_them->len != CURVE25519_LEN)
 	{
-		dropbear_exit("%s %d: Bad curve25519", __FILE__, __LINE__);
+		dropbear_exit("Bad curve25519");
 	}
 
 	curve25519_donna(out, param->priv, buf_pub_them->data);
@@ -988,5 +988,5 @@ static void read_kex_algos() {
 	return;
 
 error:
-	dropbear_exit("%s %d: No matching algo %s", __FILE__, __LINE__, erralgo);
+	dropbear_exit("No matching algo %s", erralgo);
 }

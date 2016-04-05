@@ -295,7 +295,7 @@ fail:
 	/* XXX don't fail badly here. instead propagate a failure code back up to
 	   the cli auth pubkey code, and just remove this key from the list of 
 	   ones to try. */
-	dropbear_exit("%s %d: Agent failed signing key", __FILE__, __LINE__);
+	dropbear_exit("Agent failed signing key");
 
 cleanup:
 	if (request_data) {
