@@ -102,7 +102,7 @@ void dropbear_close(const char* format, ...) {
 
 }
 
-void dropbear_exit(const char* format, ...) {
+void __dropbear_exit(const char* format, ...) {
 
 	va_list param;
 

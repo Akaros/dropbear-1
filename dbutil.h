@@ -47,7 +47,10 @@ void startsyslog();
 extern void (*_dropbear_exit)(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 extern void (*_dropbear_log)(int priority, const char* format, va_list param);
 
-void dropbear_exit(const char* format, ...) ATTRIB_PRINTF(1,2) ATTRIB_NORETURN;
+void __dropbear_exit(const char* format, ...) ATTRIB_PRINTF(1,2) ATTRIB_NORETURN;
+
+#define dropbear_exit(fmt, ...)                                                \
+        __dropbear_exit("%s@%d " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
 void dropbear_close(const char* format, ...) ATTRIB_PRINTF(1,2) ;
 void dropbear_log(int priority, const char* format, ...) ATTRIB_PRINTF(2,3) ;
