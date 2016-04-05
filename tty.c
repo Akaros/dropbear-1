@@ -140,9 +140,7 @@ static int parent_ctrl_c(int to_fd)
 	} else {
 		dropbear_log(LOG_ERR, "Open #cons/consctl: %r");
 	}
-	/* TODO: we should flush the existing input data, but for now we'll just
-	 * enter it.  Best of luck. */
-	ret = write(to_fd, "\n", 1);
+	ret = write(to_fd, "\003", 1);
 	assert(ret == 1);
 	return 1;
 }
