@@ -116,3 +116,37 @@ pid_t setsid(void)
 {
 	return 0x1337;
 }
+
+/* The daemon func is from compat.c.
+ *
+ * Once we do setsid in glibc, we don't need to do this anymore and can use
+ * glibc's version. */
+#include "includes.h"
+int daemon(int nochdir, int noclose) {
+
+	int fd;
+
+	switch (fork()) {
+		case -1:
+			return (-1);
+		case 0:
+			break;
+		default:
+			_exit(0);
+	}
+
+	if (setsid() == -1)
+		return -1;
+
+	if (!nochdir)
+		(void)chdir("/");
+
+	if (!noclose && (fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		if (fd > STDERR_FILENO)
+			(void)close(fd);
+	}
+	return 0;
+}
