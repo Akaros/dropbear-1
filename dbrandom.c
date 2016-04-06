@@ -79,10 +79,9 @@ process_file(hash_state *hs, const char *filename,
 	{
 		int readlen, wantread;
 		unsigned char readbuf[4096];
-#if 0
+#ifndef __akaros__ // Can't select on Akaros's #random, and it never blocks
 		if (!already_blocked && !prngd)
 		{
-
 			int res;
 			struct timeval timeout;
 			fd_set read_fds;
@@ -99,7 +98,7 @@ process_file(hash_state *hs, const char *filename,
 				already_blocked = 1;
 			}
 		}
-#endif
+#endif /* !__akaros__ */
 
 		if (len == 0)
 		{

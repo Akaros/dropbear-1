@@ -168,10 +168,6 @@ void main_noinetd() {
 		fclose(pidfile);
 	}
 
-	if (listensockcount > 1) {
-		fprintf(stderr, "hold on there cowboy! one socket only!\n");
-		listensockcount = 1;
-	}
 	/* incoming connection select loop */
 	for(;;) {
 
@@ -229,7 +225,6 @@ void main_noinetd() {
 			struct sockaddr_storage remoteaddr;
 			socklen_t remoteaddrlen;
 
-			if (0)
 			if (!FD_ISSET(listensocks[i], &fds)) 
 				continue;
 
@@ -305,7 +300,6 @@ void main_noinetd() {
 				m_free(remote_port);
 
 #ifndef DEBUG_NOFORK
-				if (0)
 				if (setsid() < 0) {
 					dropbear_exit("setsid: %s", strerror(errno));
 				}

@@ -189,7 +189,7 @@ void dropbear_trace(const char* format, ...) {
 	va_start(param, format);
 	fprintf(stderr, "TRACE  (%d) %f: ", getpid(), time_since_start());
 	vfprintf(stderr, format, param);
-	fprintf(stderr, "%s\n", "");
+	fprintf(stderr, "\n");
 	va_end(param);
 }
 
@@ -208,7 +208,7 @@ void dropbear_trace2(const char* format, ...) {
 	va_start(param, format);
 	fprintf(stderr, "TRACE2 (%d) %f: ", getpid(), time_since_start());
 	vfprintf(stderr, format, param);
-	fprintf(stderr, "%s\n", "");
+	fprintf(stderr, "\n");
 	va_end(param);
 }
 #endif /* DEBUG_TRACE */

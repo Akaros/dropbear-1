@@ -367,14 +367,13 @@ out:
  * g-w, o-w */
 static int checkpubkeyperms() {
 
-#if 1
-	/* we're not a timesharing system anyway. */
-	return DROPBEAR_SUCCESS;
-#endif
-
 	char* filename = NULL; 
 	int ret = DROPBEAR_FAILURE;
 	unsigned int len;
+
+#ifdef __akaros__
+	return DROPBEAR_SUCCESS;
+#endif
 
 	TRACE(("enter checkpubkeyperms"))
 

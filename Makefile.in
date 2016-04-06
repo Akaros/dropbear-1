@@ -13,6 +13,8 @@ ifndef PROGRAMS
 	PROGRAMS=dropbear dbclient dropbearkey dropbearconvert scp
 endif
 
+akaros-detect=$(findstring akaros,$(notdir @CC@))
+
 STATIC_LTC=libtomcrypt/libtomcrypt.a
 STATIC_LTM=libtommath/libtommath.a
 
@@ -24,18 +26,26 @@ CFLAGS+=-I$(srcdir)/libtomcrypt/src/headers/
 LIBTOM_LIBS=$(STATIC_LTC) $(STATIC_LTM) 
 endif
 
-COMMONOBJS=dbutil.o buffer.o akaros.o \
+COMMONOBJS=dbutil.o buffer.o \
 		dss.o bignum.o \
 		signkey.o rsa.o dbrandom.o \
 		queue.o \
 		atomicio.o compat.o fake-rfc2553.o \
 		ltc_prng.o ecc.o ecdsa.o crypto_desc.o \
 		gensignkey.o gendss.o genrsa.o
+ifeq ($(akaros-detect), akaros)
+COMMONOBJS += akaros.o
+endif
 
-SVROBJS=svr-kex.o svr-auth.o tty.o \
+SVROBJS=svr-kex.o svr-auth.o \
 		svr-authpasswd.o svr-authpubkey.o svr-authpubkeyoptions.o svr-session.o svr-service.o \
 		svr-chansession.o svr-runopts.o svr-agentfwd.o svr-main.o svr-x11fwd.o\
 		svr-tcpfwd.o svr-authpam.o
+ifeq ($(akaros-detect), akaros)
+SVROBJS += tty.o
+else
+SVROBJS += sshpty.o
+endif
 
 CLIOBJS=cli-main.o cli-auth.o cli-authpasswd.o cli-kex.o \
 		cli-session.o cli-runopts.o cli-chansession.o \
@@ -51,7 +61,10 @@ KEYOBJS=dropbearkey.o
 
 CONVERTOBJS=dropbearconvert.o keyimport.o
 
-SCPOBJS=scp.o progressmeter.o atomicio.o scpmisc.o compat.o akaros.o
+SCPOBJS=scp.o progressmeter.o atomicio.o scpmisc.o compat.o
+ifeq ($(akaros-detect), akaros)
+SCPOBJS += akaros.o
+endif
 
 HEADERS=options.h dbutil.h session.h packet.h algo.h ssh.h buffer.h kex.h \
 		dss.h bignum.h signkey.h rsa.h dbrandom.h service.h auth.h \
