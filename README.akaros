@@ -1,0 +1,58 @@
+README.akaros
+
+
+Environment prep:
+-----------------------
+Set and export AKAROS_ROOT and AKAROS_XCC_ROOT.  I recommend putting them in
+your .bashrc.
+
+AKAROS_ROOT is the path to the Akaros git repo.  AKAROS_XCC_ROOT is the install
+location for your toolchain, e.g. install-x86_64-ros-gcc/.
+
+
+Put a server key in KFS:
+-----------------------
+A default one is in KFS already, but everyone in the world has that key.  If
+you want your own to avoid MITM attacks, you'll need to make the Linux version
+of Dropbear and use its key generator.
+
+$ rm -r build/ &&  mkdir build && cd build && ../configure && make
+$ ./dropbearkey -t rsa -f $AKAROS_ROOT/kern/kfs/etc/dropbear/dropbear_rsa_host_key
+$ cd -
+
+
+Build Dropbear for Akaros:
+-----------------------
+./CONFIGURE_AKAROS
+cd build ; make clean ; make install ; cd -
+
+
+Put an authorized key in KFS:
+-----------------------
+If you don't want to use an existing key, you can build a new one:
+
+$ ssh-keygen -t rsa -b 4096 -C "your@email.com" -f $HOME/.ssh/id_db_akaros_rsa
+
+Either way, put a key in KFS:
+$ cat $HOME/.ssh/id_db_akaros_rsa.pub >> $AKAROS_ROOT/kern/kfs/.ssh/authorized_keys
+
+
+Set up your SSH config:
+-----------------------
+You might want entries in .ssh/config, especially if you have a lot of keys or
+are using qemu.  The entry for qemu assumes you're using usermode networking
+with port forwarding.
+
+~/.ssh/config
+	Host qemu
+		Hostname 127.0.0.1
+		User root
+		Port 5555
+		IdentityFile ~/.ssh/id_db_akaros_rsa
+		IdentitiesOnly yes
+
+	Host some-machine-name
+		Hostname SOME-IP
+		User root
+		IdentityFile ~/.ssh/id_db_akaros_rsa
+		IdentitiesOnly yes
