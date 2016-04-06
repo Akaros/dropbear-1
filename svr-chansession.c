@@ -101,6 +101,8 @@ static void sesssigchild_handler(int UNUSED(dummy)) {
 	/* Make channel handling code look for closed channels */
 	ses.channel_signal_pending = 1;
 
+	/* These trace calls could deadlock, since we're calling printf from a
+	 * signal handler */
 	TRACE(("enter sigchld handler"))
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
 		TRACE(("sigchld handler: pid %d", pid))
