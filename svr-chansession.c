@@ -588,20 +588,18 @@ static int sessionpty(struct ChanSess * chansess) {
 		dropbear_exit("Out of memory"); /* TODO disconnect */
 	}
 
-	if (0) {
 	pw = getpwnam(ses.authstate.pw_name);
 	if (!pw)
-		dropbear_exit("%s %d: getpwnam failed after succeeding previously", __FILE__, __LINE__);
-		pty_setowner(pw, chansess->tty);
-	}
-		
-		/* Set up the rows/col counts */
-		sessionwinchange(chansess);
-		
-		/* Read the terminal modes */
-		get_termmodes(chansess);
-		
-		TRACE(("leave sessionpty"))
+		dropbear_exit("getpwnam failed after succeeding previously");
+	pty_setowner(pw, chansess->tty);
+
+	/* Set up the rows/col counts */
+	sessionwinchange(chansess);
+
+	/* Read the terminal modes */
+	get_termmodes(chansess);
+
+	TRACE(("leave sessionpty"))
 	return DROPBEAR_SUCCESS;
 }
 
@@ -921,8 +919,6 @@ static void execchild(void *user_data) {
 #endif /* HAVE_CLEARENV */
 #endif /* DEBUG_VALGRIND */
 
-#if 1
-#else
 	/* We can only change uid/gid as root ... */
 	if (getuid() == 0) {
 
@@ -946,7 +942,7 @@ static void execchild(void *user_data) {
 			dropbear_exit("Couldn't	change user as non-root");
 		}
 	}
-#endif
+
 	/* set env vars */
 	addnewvar("USER", ses.authstate.pw_name);
 	addnewvar("LOGNAME", ses.authstate.pw_name);

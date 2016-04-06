@@ -262,9 +262,6 @@ static int checkusername(char *username, unsigned int userlen) {
 
 	/* check if we are running as non-root, and login user is different from the server */
 	uid = geteuid();
-#if 1
-	uid = 0;
-#endif
 	if (uid != 0 && uid != ses.authstate.pw_uid) {
 		TRACE(("running as nonroot, only server uid is allowed"))
 		dropbear_log(LOG_WARNING,

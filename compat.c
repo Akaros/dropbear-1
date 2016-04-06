@@ -170,7 +170,7 @@ int daemon(int nochdir, int noclose) {
 		default:
 			_exit(0);
 	}
-	if (0)
+
 	if (setsid() == -1)
 		return -1;
 

@@ -92,8 +92,7 @@ static void main_inetd() {
 	/* Don't check the return value - it may just fail since inetd has
 	 * already done setsid() after forking (xinetd on Darwin appears to do
 	 * this */
-	if (0)
-		setsid();
+	setsid();
 
 	/* Start service program 
 	 * -1 is a dummy childpipe, just something we can close() without 

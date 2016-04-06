@@ -579,14 +579,6 @@ const char* get_user_shell() {
 	}
 }
 void fill_passwd(const char* username) {
-// Let's avoid all the ghetto stuff in akaros libc for now ...
-#if 1
-	ses.authstate.pw_uid = 0;
-	ses.authstate.pw_gid = 0;
-	ses.authstate.pw_name = m_strdup("root");
-	ses.authstate.pw_dir = m_strdup("/root");
-	ses.authstate.pw_shell = m_strdup("/bin/sh");
-#else
 	struct passwd *pw = NULL;
 	if (ses.authstate.pw_name)
 		m_free(ses.authstate.pw_name);
@@ -621,7 +613,6 @@ void fill_passwd(const char* username) {
 		}
 		ses.authstate.pw_passwd = m_strdup(passwd_crypt);
 	}
-#endif
 }
 
 /* Called when channels are modified */

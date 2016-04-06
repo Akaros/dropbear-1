@@ -221,3 +221,8 @@ void pty_make_controlling_tty(int *ttyfd, const char *tty_name)
 	if (close(intr_child))
 		handle_error("closing intr_child");
 }
+
+void pty_setowner(struct passwd *pw, const char *tty_name)
+{
+	fprintf(stderr, "%s %s: not yet\n", __func__, tty_name);
+}
