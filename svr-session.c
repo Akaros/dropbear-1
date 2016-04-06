@@ -217,7 +217,6 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 
 	if (!svr_opts.usingsyslog || havetrace)
 	{
-#if 0 // AKAROS_PORT
 		struct tm * local_tm = NULL;
 		timesec = time(NULL);
 		local_tm = localtime(&timesec);
@@ -229,9 +228,6 @@ void svr_dropbear_log(int priority, const char* format, va_list param) {
 			snprintf(datestr, sizeof(datestr), "%d", (int)timesec);
 		}
 		fprintf(stderr, "[%d] %s %s\n", getpid(), datestr, printbuf);
-#else
-		fprintf(stderr, "[%d] %s\n", getpid(), printbuf);
-#endif
 	}
 }
 
