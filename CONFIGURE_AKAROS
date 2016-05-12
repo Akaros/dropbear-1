@@ -2,10 +2,9 @@
 set -e
 
 : ${AKAROS_ROOT:=${HOME}/projects/akaros/}
-: ${AKAROS_XCC_ROOT:=${HOME}/install/x86_64-ucb-akaros-gcc}
 
 KFS=${AKAROS_ROOT}/kern/kfs/
-XCC=${AKAROS_XCC_ROOT}/bin/x86_64-ucb-akaros-gcc
+XCC=x86_64-ucb-akaros-gcc
 AKAROS_CFLAGS="-fno-omit-frame-pointer -g -std=gnu99"
 AKAROS_LDFLAGS=""
 AKAROS_LIBS="-liplib -lpthread"
