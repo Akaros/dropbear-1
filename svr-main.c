@@ -149,7 +149,7 @@ void main_noinetd() {
 			closefds = 1;
 		}
 #endif
-		if (daemon(0, closefds) < 0) {
+		if (daemon(0, !closefds) < 0) {
 			dropbear_exit("Failed to daemonize: %s", strerror(errno));
 		}
 	}
