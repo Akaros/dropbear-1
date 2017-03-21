@@ -65,14 +65,14 @@
 #include "packet.h"
 #include "algo.h"
 
-#ifdef ENABLE_SVR_PUBKEY_AUTH
+#if DROPBEAR_SVR_PUBKEY_AUTH
 
 #define MIN_AUTHKEYS_LINE 10 /* "ssh-rsa AB" - short but doesn't matter */
 #define MAX_AUTHKEYS_LINE 4200 /* max length of a line in authkeys */
 
 static int checkpubkey(char* algo, unsigned int algolen,
 		unsigned char* keyblob, unsigned int keybloblen);
-static int checkpubkeyperms();
+static int checkpubkeyperms(void);
 static void send_msg_userauth_pk_ok(char* algo, unsigned int algolen,
 		unsigned char* keyblob, unsigned int keybloblen);
 static int checkfileperm(char * filename);

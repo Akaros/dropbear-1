@@ -79,14 +79,14 @@ void (*_dropbear_exit)(int exitcode, const char* format, va_list param) ATTRIB_N
 void (*_dropbear_log)(int priority, const char* format, va_list param)
 						= generic_dropbear_log;
 
-#ifdef DEBUG_TRACE
+#if DEBUG_TRACE
 int debug_trace = 0;
 #endif
 
 #ifndef DISABLE_SYSLOG
-void startsyslog() {
+void startsyslog(const char *ident) {
 
-	openlog(PROGNAME, LOG_PID, LOG_AUTHPRIV);
+	openlog(ident, LOG_PID, LOG_AUTHPRIV);
 
 }
 #endif /* DISABLE_SYSLOG */
@@ -149,7 +149,7 @@ void dropbear_log(int priority, const char* format, ...) {
 }
 
 
-#ifdef DEBUG_TRACE
+#if DEBUG_TRACE
 
 static double debug_start_time = -1;
 
@@ -157,26 +157,26 @@ void debug_start_net()
 {
 	if (getenv("DROPBEAR_DEBUG_NET_TIMESTAMP"))
 	{
-    	/* Timestamps start from first network activity */
-	    struct timeval tv;
-	    gettimeofday(&tv, NULL);
-	    debug_start_time = tv.tv_sec + (tv.tv_usec / 1000000.0);
-	    TRACE(("Resetting Dropbear TRACE timestamps"))
+		/* Timestamps start from first network activity */
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		debug_start_time = tv.tv_sec + (tv.tv_usec / 1000000.0);
+		TRACE(("Resetting Dropbear TRACE timestamps"))
 	}
 }
 
 static double time_since_start()
 {
-    double nowf;
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    nowf = tv.tv_sec + (tv.tv_usec / 1000000.0);
-    if (debug_start_time < 0)
-    {
-        debug_start_time = nowf;
-        return 0;
-    }
-    return nowf - debug_start_time;
+	double nowf;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	nowf = tv.tv_sec + (tv.tv_usec / 1000000.0);
+	if (debug_start_time < 0)
+	{
+		debug_start_time = nowf;
+		return 0;
+	}
+	return nowf - debug_start_time;
 }
 
 void dropbear_trace(const char* format, ...) {
@@ -262,7 +262,7 @@ int spawn_command(void(*exec_fn)(void *user_data), void *exec_data,
 		return DROPBEAR_FAILURE;
 	}
 
-#ifdef USE_VFORK
+#if DROPBEAR_VFORK
 	pid = vfork();
 #else
 	pid = fork();
@@ -371,7 +371,7 @@ void run_shell_command(const char* cmd, unsigned int maxfd, char* usershell) {
 	execv(usershell, argv);
 }
 
-#ifdef DEBUG_TRACE
+#if DEBUG_TRACE
 void printhex(const char * label, const unsigned char * buf, int len) {
 
 	int i;
@@ -465,7 +465,7 @@ out:
  * authkeys file.
  * Will return DROPBEAR_SUCCESS if data is read, or DROPBEAR_FAILURE on EOF.*/
 /* Only used for ~/.ssh/known_hosts and ~/.ssh/authorized_keys */
-#if defined(DROPBEAR_CLIENT) || defined(ENABLE_SVR_PUBKEY_AUTH)
+#if DROPBEAR_CLIENT || DROPBEAR_SVR_PUBKEY_AUTH
 int buf_getline(buffer * line, FILE * authfile) {
 
 	int c = EOF;
@@ -558,21 +558,6 @@ void * m_realloc(void* ptr, size_t size) {
 	}
 	return ret;
 }
-
-/* Clear the data, based on the method in David Wheeler's
- * "Secure Programming for Linux and Unix HOWTO" */
-/* Beware of calling this from within dbutil.c - things might get
- * optimised away */
-void m_burn(void *data, unsigned int len) {
-	volatile char *p = data;
-
-	if (data == NULL)
-		return;
-	while (len--) {
-		*p++ = 0x0;
-	}
-}
-
 
 void setnonblocking(int fd) {
 
@@ -696,4 +681,21 @@ time_t monotonic_now() {
 	return time(NULL);
 }
 
+void fsync_parent_dir(const char* fn) {
+#ifdef HAVE_LIBGEN_H
+	char *fn_dir = m_strdup(fn);
+	char *dir = dirname(fn_dir);
+	int dirfd = open(dir, O_RDONLY);
 
+	if (dirfd != -1) {
+		if (fsync(dirfd) != 0) {
+			TRACE(("fsync of directory %s failed: %s", dir, strerror(errno)))
+		}
+		m_close(dirfd);
+	} else {
+		TRACE(("error opening directory %s for fsync: %s", dir, strerror(errno)))
+	}
+
+	free(fn_dir);
+#endif
+}
