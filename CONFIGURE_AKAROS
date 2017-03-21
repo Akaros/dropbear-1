@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-: ${AKAROS_ROOT:=${HOME}/projects/akaros/}
+if [ "x${AKAROS_ROOT}" == "x" ]
+then
+    echo AKAROS_ROOT is empty!  You must set it!
+	exit
+fi
 
 KFS=${AKAROS_ROOT}/kern/kfs/
 XCC=x86_64-ucb-akaros-gcc
