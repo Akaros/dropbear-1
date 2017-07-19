@@ -148,7 +148,7 @@
 
 #define RECV_WINDOWEXTEND (opts.recv_window / 3) /* We send a "window extend" every
 								RECV_WINDOWEXTEND bytes */
-#define MAX_RECV_WINDOW (1024*1024) /* 1 MB should be enough */
+#define MAX_RECV_WINDOW (2 * 1024 * 1024) /* 2 MB is what OpenSSH uses */
 
 #define MAX_CHANNELS 1000 /* simple mem restriction, includes each tcp/x11
 							connection, so can't be _too_ small */
