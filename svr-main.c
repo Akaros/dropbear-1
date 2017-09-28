@@ -359,7 +359,16 @@ static void sigsegv_handler(int UNUSED(unused)) {
 /* catch ctrl-c or sigterm */
 static void sigintterm_handler(int UNUSED(unused)) {
 
+/* The thread sleeping in select() won't wake due to the process-wide signal.
+ * We can't do all of the stuff DB usually does from vcore context, but unlink
+ * and print work. */
+#ifdef __akaros__
+	unlink(svr_opts.pidfile);
+	fprintf(stderr, "Terminated by signal\n");
+	_exit(EXIT_FAILURE);
+#else
 	exitflag = 1;
+#endif
 }
 
 /* Things used by inetd and non-inetd modes */
