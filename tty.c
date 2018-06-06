@@ -72,7 +72,7 @@ static void *intr_data_flow(int from_fd, int to_fd, struct interp_rule *rules)
 {
 	char buf[512];
 	char *last_write_pos;
-	size_t amt_read, amt_write;
+	ssize_t amt_read, amt_write;
 	int ret;
 	struct interp_rule *rule;
 
