@@ -86,7 +86,8 @@ static void *intr_data_flow(int from_fd, int to_fd, struct interp_rule *rules)
 		for (int i = 0; i < amt_read; i++) {
 			rule = lookup_interp(rules, buf[i]);
 			if (rule) {
-				/* write up to but not including buf[i], from last */
+				/* write up to but not including buf[i], from
+				 * last */
 				amt_write = &buf[i] - last_write_pos;
 				ret = write(to_fd, last_write_pos, amt_write);
 				assert(ret == amt_write);
@@ -97,7 +98,8 @@ static void *intr_data_flow(int from_fd, int to_fd, struct interp_rule *rules)
 		}
 		if (last_write_pos < &buf[amt_read]) {
 			amt_write = &buf[amt_read] - last_write_pos;
-			ret = write(to_fd, last_write_pos, &buf[amt_read] - last_write_pos);
+			ret = write(to_fd, last_write_pos,
+				    &buf[amt_read] - last_write_pos);
 			assert(ret == amt_write);
 		}
 	}
@@ -182,17 +184,18 @@ int pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 	intr_child = child_side[0];
 	*ttyfd = child_side[1];
 	snprintf(namebuf, namebuflen, "pipe");
-	/* These threads will exist in the child too, when we fork in ptycommand.
-	 * that would normally be a problem, but when we exec, we'll call
-	 * pty_make_controlling_tty() and close them.
+	/* These threads will exist in the child too, when we fork in
+	 * ptycommand.  that would normally be a problem, but when we exec,
+	 * we'll call pty_make_controlling_tty() and close them.
 	 *
 	 * It's a little nastier than that.  We're going to fork with a couple
-	 * outstanding syscalls in flight.  Those do not get forked - the syscalls
-	 * belong to the parent.  So even if we never execed, those uthreads would
-	 * still be sitting waiting for a syscall struct that never finishes.
+	 * outstanding syscalls in flight.  Those do not get forked - the
+	 * syscalls belong to the parent.  So even if we never execed, those
+	 * uthreads would still be sitting waiting for a syscall struct that
+	 * never finishes.
 	 *
-	 * It is important that we don't want to be an MCP - o/w fork and exec will
-	 * fail.  Gotta love fork. */
+	 * It is important that we don't want to be an MCP - o/w fork and exec
+	 * will fail.  Gotta love fork. */
 	parlib_wants_to_be_mcp = FALSE;
 	if (pthread_create(&child_to_parent, NULL, &intr_child_to_parent, NULL))
 		handle_error("create child_to_parent");
@@ -203,8 +206,8 @@ int pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, int namebuflen)
 
 void pty_change_window_size(int ptyfd, int row, int col, int xpixel, int ypixel)
 {
-	fprintf(stderr, "%s(%d, %d, %d, %d, %d): not yet\n", __func__, ptyfd, row,
-	        col,xpixel, ypixel);
+	fprintf(stderr, "%s(%d, %d, %d, %d, %d): not yet\n", __func__, ptyfd,
+		row, col,xpixel, ypixel);
 }
 
 void pty_release(const char *tty_name)
@@ -214,8 +217,8 @@ void pty_release(const char *tty_name)
 
 void pty_make_controlling_tty(int *ttyfd, const char *tty_name)
 {
-	/* The rest of DB didn't know about these FDs, so we close them in the child
-	 * after the fork and before the exec. */
+	/* The rest of DB didn't know about these FDs, so we close them in the
+	 * child after the fork and before the exec. */
 	if (close(intr_parent))
 		handle_error("closing intr_parent");
 	if (close(intr_child))
