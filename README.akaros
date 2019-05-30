@@ -3,11 +3,7 @@ README.akaros
 
 Environment prep:
 -----------------------
-Set and export AKAROS_ROOT and AKAROS_XCC_ROOT.  I recommend putting them in
-your .bashrc.
-
-AKAROS_ROOT is the path to the Akaros git repo.  AKAROS_XCC_ROOT is the install
-location for your toolchain, e.g. install-x86_64-ros-gcc/.
+Set and export AKAROS_ROOT.  AKAROS_ROOT is the path to the Akaros git repo.
 
 
 Put a server key in KFS:
